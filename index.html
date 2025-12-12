@@ -2,75 +2,82 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- CRITICAL FOR MOBILE: Prevents zooming, ensures 1:1 scale -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Guild Map Helper</title>
   <style>
     /* DARK THEME RESET */
-    body { font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; background: #222; color: #eee; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; background: #222; color: #eee; }
     
-    /* TAB HEADER */
-    .tabs { display: flex; background: #333; border-bottom: 2px solid #555; height: 50px; }
+    /* TAB HEADER - Mobile Friendly */
+    .tabs { display: flex; background: #333; border-bottom: 2px solid #555; height: 60px; flex-shrink: 0; }
     .tab-btn {
       flex: 1; border: none; background: #333; color: #aaa; 
-      font-size: 1rem; font-weight: bold; cursor: pointer;
+      font-size: 1.1rem; font-weight: bold; cursor: pointer;
       transition: background 0.2s, color 0.2s;
+      /* Better touch target */
+      padding: 10px; 
     }
-    .tab-btn:hover { background: #444; color: #fff; }
-    .tab-btn.active { background: #222; color: gold; border-bottom: 3px solid gold; }
+    .tab-btn.active { background: #222; color: gold; border-bottom: 4px solid gold; }
 
-    /* MAIN CONTENT AREA */
-    .tab-content { display: none; height: calc(100vh - 50px); width: 100%; overflow: hidden; }
+    /* CONTENT AREA */
+    .tab-content { display: none; height: calc(100% - 60px); width: 100%; overflow: hidden; flex-direction: column; }
     .tab-content.active { display: flex; }
 
-    /* TAB 1: SELECTION (Split View) */
-    #tab-selection { flex-direction: row; }
+    /* TAB 1: SELECTION (Vertical Layout for Mobile) */
+    #tab-selection { flex-direction: column; overflow: hidden; }
     
     #source-panel { 
-      width: 40%; height: 100%; padding: 10px; border-right: 2px solid #444; 
+      /* Top 40% for screenshot */
+      width: 100%; height: 40%; padding: 10px; border-bottom: 2px solid #444; 
       overflow: auto; background: #2a2a2a; display: flex; flex-direction: column; align-items: center; 
     }
-    #source-panel img { max-width: 100%; border: 2px solid #444; display: none; cursor: crosshair; margin-top: 10px; }
-    
-    #groups-panel { 
-      width: 60%; height: 100%; padding: 20px; 
-      overflow-y: auto; background: #333; display: flex; flex-wrap: wrap; gap: 15px; align-content: flex-start; 
+    #source-panel img { 
+      max-width: 100%; display: none; cursor: crosshair; margin-top: 5px; border: 2px solid #555;
     }
     
-    .group-wrapper { width: 48%; display: flex; flex-direction: column; min-height: 200px; }
-    .group-header { font-weight: bold; margin-bottom: 5px; font-size: 1.1rem; color: #ccc; }
+    #groups-panel { 
+      /* Bottom 60% for groups */
+      width: 100%; height: 60%; padding: 10px; 
+      overflow-y: auto; background: #333; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; 
+    }
+    
+    .group-wrapper { 
+      /* 2 Columns on mobile */
+      width: 48%; display: flex; flex-direction: column; min-height: 140px; 
+    }
+    .group-header { font-weight: bold; margin-bottom: 3px; font-size: 0.9rem; color: #ccc; }
     
     .group-container { 
       flex: 1; border: 2px dashed #666; background: #444;
-      padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; border-radius: 6px; 
+      padding: 5px; display: flex; flex-wrap: wrap; gap: 5px; border-radius: 6px; 
     }
-    .group-container:hover { border-color: #888; background: #555; }
+    .group-container.drag-over { background: #555; border-color: #aaa; }
 
-    /* TAB 2: MAP (Full View) */
-    #tab-map { position: relative; background: #111; }
-    
-    #map-bg { 
-      width: 100%; height: 100%; 
-      object-fit: contain; object-position: center; 
-      display: block; pointer-events: none; 
-    }
+    /* TAB 2: MAP */
+    #tab-map { position: relative; background: #111; touch-action: none; }
+    #map-bg { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; pointer-events: none; }
 
     /* CARDS */
     .avatar-card { 
-      width: 60px; height: 60px; /* Bigger in selection tab */
+      width: 45px; height: 45px; /* Slightly smaller to fit mobile */
       aspect-ratio: 1/1; 
-      border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.5); 
-      cursor: grab; background-position: center; background-size: contain; background-repeat: no-repeat; 
+      border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.5); 
+      cursor: grab; background-position: center; background-size: cover; background-repeat: no-repeat; 
       background-color: #000; border-radius: 6px; position: relative; flex-shrink: 0; 
+      touch-action: none; /* Crucial for touch dragging */
     }
-    .avatar-card:active { cursor: grabbing; border-color: gold; }
+    .avatar-card:active { border-color: gold; }
 
+    /* DELETE BUTTON (Bigger for Touch) */
     .delete-btn {
-      position: absolute; top: -6px; right: -6px; width: 18px; height: 18px;
+      position: absolute; top: -8px; right: -8px; width: 20px; height: 20px;
       background: red; color: white; border-radius: 50%; text-align: center;
-      line-height: 16px; font-size: 12px; font-weight: bold; cursor: pointer;
-      border: 1px solid white; display: none; z-index: 10;
+      line-height: 18px; font-size: 14px; font-weight: bold; cursor: pointer;
+      border: 2px solid white; display: none; z-index: 10;
     }
-    .avatar-card:hover .delete-btn { display: block; }
+    /* Show delete button on card tap/hover */
+    .avatar-card:hover .delete-btn, .avatar-card:active .delete-btn { display: block; }
 
     /* MAP TOKENS */
     .map-group { 
@@ -78,20 +85,21 @@
       width: 100px; height: 80px; 
       background: rgba(255, 255, 255, 0.4); 
       border: 3px solid gold; border-radius: 8px; 
-      cursor: move; 
+      /* 3x2 Grid */
       display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; 
       gap: 1px; padding: 2px; 
       box-shadow: 0 4px 8px rgba(0,0,0,0.5); 
       z-index: 100; user-select: none; overflow: visible; 
+      touch-action: none;
     }
 
     .mini-avatar { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; border-radius: 2px; }
     
     .group-label-overlay {
-      position: absolute; top: -24px; left: -10px; 
+      position: absolute; top: -26px; left: -10px; 
       background: white; border: 2px solid inherit;
       color: #333; font-weight: bold; font-size: 14px;
-      padding: 2px 8px; border-radius: 12px;
+      padding: 4px 10px; border-radius: 12px;
       display: flex; justify-content: center; align-items: center;
       z-index: 200; box-shadow: 0 2px 4px rgba(0,0,0,0.5);
       white-space: nowrap;
@@ -104,31 +112,37 @@
     #map-group-d { border-color: #f1c40f; background-color: rgba(241, 196, 15, 0.3); }
     #map-group-y { border-color: #1abc9c; background-color: rgba(26, 188, 156, 0.3); }
     #map-group-z { border-color: #d500f9; background-color: rgba(213, 0, 249, 0.3); }
-    
     .group-label-overlay { background: #fff; border-color: inherit; }
 
-    /* UPLOAD BUTTON STYLING */
     .upload-btn-wrapper { margin-bottom: 10px; width: 100%; text-align: center; }
-    input[type=file] { color: #eee; }
+    input[type=file] { color: #eee; font-size: 0.9rem; }
+    
+    /* Help text visibility */
+    #placeholder-text { text-align: center; display: block; margin-top: 20px; }
 
   </style>
+  
+  <!-- POLYFILL FOR MOBILE DRAG & DROP -->
+  <script>
+  /* DragDropTouch Polyfill (Simplified) - Enables HTML5 DnD on Touch Devices */
+  var DragDropTouch;
+  (function(DragDropTouch_1){"use strict";var DataTransfer=function(){function DataTransfer(){this._dropEffect="move";this._effectAllowed="all";this._data={}}Object.defineProperty(DataTransfer.prototype,"dropEffect",{get:function(){return this._dropEffect},set:function(value){this._dropEffect=value},enumerable:!0,configurable:!0});Object.defineProperty(DataTransfer.prototype,"effectAllowed",{get:function(){return this._effectAllowed},set:function(value){this._effectAllowed=value},enumerable:!0,configurable:!0});Object.defineProperty(DataTransfer.prototype,"types",{get:function(){return Object.keys(this._data)},enumerable:!0,configurable:!0});DataTransfer.prototype.clearData=function(type){type!=null?delete this._data[type.toLowerCase()]:this._data={}};DataTransfer.prototype.getData=function(type){return this._data[type.toLowerCase()]||""};DataTransfer.prototype.setData=function(type,value){this._data[type.toLowerCase()]=value};DataTransfer.prototype.setDragImage=function(img,offsetX,offsetY){var ddt=DragDropTouch._instance;ddt._imgCustom=img;ddt._imgOffset={x:offsetX,y:offsetY}};return DataTransfer}();DragDropTouch_1.DataTransfer=DataTransfer;var DragDropTouch=function(){function DragDropTouch(){this._lastClick=0;if(DragDropTouch._instance){throw"DragDropTouch instance already created."}var _this=this;if("ontouchstart"in document){var d=document,ts=this._touchstart.bind(this),tm=this._touchmove.bind(this),te=this._touchend.bind(this);d.addEventListener("touchstart",ts);d.addEventListener("touchmove",tm);d.addEventListener("touchend",te);d.addEventListener("touchcancel",te)}}Object.defineProperty(DragDropTouch,"getInstance",{get:function(){return DragDropTouch._instance},enumerable:!0,configurable:!0});DragDropTouch.prototype._touchstart=function(e){var _this=this;if(e.touches.length==1){var target=e.target;while(target){if(target.draggable){this._dragSource=target;this._ptDown=this._getPoint(e);this._lastTouch=e;e.preventDefault();setTimeout(function(){if(_this._dragSource==target&&_this._img==null){if(_this._dispatchEvent(e,"contextmenu",target)){_this._reset()}}},500);return}target=target.parentElement}}};DragDropTouch.prototype._touchmove=function(e){if(this._dragSource&&!this._img&&!this._ptDown){this._ptDown=this._getPoint(e)}if(this._dragSource){if(!this._img){var delta=e.touches[0].clientX-this._ptDown.x;if(Math.abs(delta)>5){this._dispatchEvent(e,"dragstart",this._dragSource);this._createImage(e);this._dispatchEvent(e,"dragenter",e.target)}}if(this._img){this._lastTouch=e;e.preventDefault();if(e.target!=this._lastTarget){this._dispatchEvent(this._lastTouch,"dragleave",this._lastTarget);this._dispatchEvent(e,"dragenter",e.target);this._lastTarget=e.target}this._moveImage(e);this._dispatchEvent(e,"dragover",e.target)}}};DragDropTouch.prototype._touchend=function(e){if(this._dragSource){if(this._img){this._dispatchEvent(this._lastTouch,"drop",e.target);this._dispatchEvent(this._lastTouch,"dragend",this._dragSource)}else{if(Math.abs(e.changedTouches[0].clientX-this._ptDown.x)<5&&e.timeStamp-this._lastClick>500){this._lastClick=e.timeStamp;this._dragSource.click()}}this._reset()}};DragDropTouch.prototype._reset=function(){if(this._img){this._img.parentElement.removeChild(this._img);this._img=null}this._dragSource=null;this._imgCustom=null;this._ptDown=null;this._lastTouch=null;this._lastTarget=null};DragDropTouch.prototype._getPoint=function(e){if(e&&e.touches&&e.touches.length){return{x:e.touches[0].clientX,y:e.touches[0].clientY}}return{x:0,y:0}};DragDropTouch.prototype._createImage=function(e){if(this._img){this._img.parentElement.removeChild(this._img)}if(!this._imgCustom){this._img=this._dragSource.cloneNode(!0);this._copyStyle(this._dragSource,this._img);this._img.style.top=this._img.style.left="-9999px";if(!this._imgCustom){var rc=this._dragSource.getBoundingClientRect();this._ptDown.x-=rc.left;this._ptDown.y-=rc.top}}else{this._img=this._imgCustom.cloneNode(!0);this._copyStyle(this._imgCustom,this._img)}this._img.style.position="absolute";this._img.style.zIndex="999999";this._img.style.pointerEvents="none";document.body.appendChild(this._img);this._moveImage(e)};DragDropTouch.prototype._moveImage=function(e){if(this._img){requestAnimationFrame(function(){var pt=this._getPoint(e),s=this._img.style;s.position="absolute";s.pointerEvents="none";s.zIndex="999999";s.left=Math.round(pt.x-this._ptDown.x)+"px";s.top=Math.round(pt.y-this._ptDown.y)+"px"}.bind(this))}};DragDropTouch.prototype._copyStyle=function(src,dst){if(dst.removeAttribute){["id","class","style","draggable"].forEach(function(att){dst.removeAttribute(att)})}if(src instanceof HTMLCanvasElement){var cSrc=src,cDst=dst;cDst.width=cSrc.width;cDst.height=cSrc.height;cDst.getContext("2d").drawImage(cSrc,0,0)}var cs=getComputedStyle(src);for(var i=0;i<cs.length;i++){var key=cs[i];dst.style[key]=cs[key]}dst.style.pointerEvents="none"};DragDropTouch.prototype._dispatchEvent=function(e,type,target){if(e&&target){var evt=document.createEvent("Event"),t=e.touches?e.touches[0]:e;evt.initEvent(type,!0,!0);evt.button=0;evt.which=evt.buttons=1;this._copyProps(evt,e,["altKey","ctrlKey","metaKey","shiftKey"]);this._copyProps(evt,t,["pageX","pageY","clientX","clientY","screenX","screenY"]);evt.dataTransfer=new DataTransfer;target.dispatchEvent(evt);return evt.defaultPrevented}return !1};DragDropTouch.prototype._copyProps=function(dst,src,props){for(var i=0;i<props.length;i++){var p=props[i];dst[p]=src[p]}};DragDropTouch._instance=new DragDropTouch;return DragDropTouch}();DragDropTouch_1.DragDropTouch=DragDropTouch})(DragDropTouch||(DragDropTouch={}));
+  </script>
 </head>
 <body>
 
-  <!-- TAB NAVIGATION -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="openTab('tab-selection')">1. Assign Groups</button>
-    <button class="tab-btn" onclick="openTab('tab-map')">2. Map Strategy</button>
+    <button class="tab-btn active" onclick="openTab('tab-selection')">1. Groups</button>
+    <button class="tab-btn" onclick="openTab('tab-map')">2. Map</button>
   </div>
 
-  <!-- TAB 1: SELECTION -->
   <div id="tab-selection" class="tab-content active">
     <div id="source-panel">
       <div class="upload-btn-wrapper">
         <span style="display:block; margin-bottom:5px; color:#aaa;">Step 1: Upload Screenshot</span>
         <input type="file" id="imageLoader" accept="image/*" />
       </div>
-      <span id="placeholder-text" style="margin-top:50px; color:#666;">(Screenshot will appear here)</span>
+      <span id="placeholder-text" style="color:#666;">(Tap Faces to Create Cards)</span>
       <img id="sourceImage" alt="Uploaded Screenshot" />
     </div>
     
@@ -142,30 +156,23 @@
     </div>
   </div>
 
-  <!-- TAB 2: MAP -->
   <div id="tab-map" class="tab-content">
     <img id="map-bg" src="map.png" alt="MAP LOADING... (Ensure file is named map.png)" />
     
     <!-- Map Tokens -->
-    <div id="map-group-a" class="map-group" style="top: 50px; left: 50px;"><div class="group-label-overlay">A</div></div>
-    <div id="map-group-b" class="map-group" style="top: 50px; left: 180px;"><div class="group-label-overlay">B</div></div>
-    <div id="map-group-c" class="map-group" style="top: 50px; left: 310px;"><div class="group-label-overlay">C</div></div>
-    <div id="map-group-d" class="map-group" style="top: 50px; left: 440px;"><div class="group-label-overlay">D</div></div>
-    <div id="map-group-y" class="map-group" style="top: 50px; left: 570px;"><div class="group-label-overlay">Y</div></div>
-    <div id="map-group-z" class="map-group" style="top: 50px; left: 700px;"><div class="group-label-overlay">Z</div></div>
+    <div id="map-group-a" class="map-group" style="top: 50px; left: 20px;"><div class="group-label-overlay">A</div></div>
+    <div id="map-group-b" class="map-group" style="top: 50px; left: 140px;"><div class="group-label-overlay">B</div></div>
+    <div id="map-group-c" class="map-group" style="top: 50px; left: 260px;"><div class="group-label-overlay">C</div></div>
+    <div id="map-group-d" class="map-group" style="top: 150px; left: 20px;"><div class="group-label-overlay">D</div></div>
+    <div id="map-group-y" class="map-group" style="top: 150px; left: 140px;"><div class="group-label-overlay">Y</div></div>
+    <div id="map-group-z" class="map-group" style="top: 150px; left: 260px;"><div class="group-label-overlay">Z</div></div>
   </div>
 
   <script>
-    // TAB LOGIC
     function openTab(tabId) {
-      // Hide all contents
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      
-      // Show target
       document.getElementById(tabId).classList.add('active');
-      
-      // Highlight button
       const btnIndex = tabId === 'tab-selection' ? 0 : 1;
       document.querySelectorAll('.tab-btn')[btnIndex].classList.add('active');
     }
@@ -175,7 +182,6 @@
     const placeholderText = document.getElementById('placeholder-text');
     let avatarCount = 0;
 
-    // UPLOAD
     imageLoader.addEventListener('change', function(e) {
       if(!e.target.files || !e.target.files[0]) return;
       const reader = new FileReader();
@@ -187,20 +193,26 @@
       reader.readAsDataURL(e.target.files[0]);
     });
 
-    // CLICK FACE
     sourceImage.addEventListener('click', function(e) {
       if (!sourceImage.src || sourceImage.style.display === 'none') return;
-
+      
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const size = 180; 
+      const size = 150; 
       canvas.width = size; canvas.height = size;
       
       const rect = sourceImage.getBoundingClientRect();
       const scaleX = sourceImage.naturalWidth / rect.width;
       const scaleY = sourceImage.naturalHeight / rect.height;
-      const clickX = (e.clientX - rect.left) * scaleX;
-      const clickY = (e.clientY - rect.top) * scaleY;
+      
+      // Calculate touch/click position relative to visual image
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const domX = clientX - rect.left;
+      const domY = clientY - rect.top;
+
+      const clickX = domX * scaleX;
+      const clickY = domY * scaleY;
       
       ctx.drawImage(sourceImage, clickX - size/2, clickY - size/2, size, size, 0, 0, size, size);
       const imgData = canvas.toDataURL();
@@ -215,12 +227,19 @@
       const delBtn = document.createElement('div');
       delBtn.className = 'delete-btn';
       delBtn.innerText = 'X';
-      delBtn.onclick = function(evt) { 
+      
+      // Handle Touch delete better
+      const deleteAction = function(evt) { 
         evt.stopPropagation(); 
+        evt.preventDefault();
         const parentGroup = avatar.closest('.group-container');
         avatar.remove(); 
         if(parentGroup) updateMapToken(parentGroup.id);
       };
+      
+      delBtn.addEventListener('click', deleteAction);
+      delBtn.addEventListener('touchend', deleteAction);
+      
       avatar.appendChild(delBtn);
 
       avatar.ondragstart = drag;
@@ -233,14 +252,27 @@
     function drop(ev) {
       ev.preventDefault();
       var data = ev.dataTransfer.getData("text");
+      // Safety check for empty data
+      if (!data) return; 
+      
       const draggedElement = document.getElementById(data);
+      if (!draggedElement) return;
+
       const targetContainer = ev.target.closest('.group-container');
       
       if(targetContainer) {
+        targetContainer.classList.remove('drag-over');
         targetContainer.appendChild(draggedElement);
         updateAllMapTokens();
       }
     }
+    
+    // Add visual feedback for drag over
+    document.querySelectorAll('.group-container').forEach(gc => {
+      gc.addEventListener('dragover', () => gc.classList.add('drag-over'));
+      gc.addEventListener('dragleave', () => gc.classList.remove('drag-over'));
+      gc.addEventListener('drop', () => gc.classList.remove('drag-over'));
+    });
 
     function updateAllMapTokens() {
       ['a','b','c','d','y','z'].forEach(id => updateMapToken('group-' + id));
@@ -257,7 +289,6 @@
       mapToken.appendChild(label);
 
       const avatars = container.querySelectorAll('.avatar-card');
-      // Limit to 6 for 3x2 grid
       avatars.forEach((av, index) => {
         if(index < 6) {
            const mini = document.createElement('div');
@@ -268,7 +299,7 @@
       });
     }
 
-    // MAP DRAG LOGIC (Works across tabs because DOM exists)
+    /* DRAG LOGIC FOR MAP TOKENS */
     const mapGroups = document.querySelectorAll('.map-group');
     mapGroups.forEach(grp => {
       let isDragging = false;
@@ -277,18 +308,22 @@
       grp.addEventListener('mousedown', startDrag);
       window.addEventListener('mousemove', moveDrag);
       window.addEventListener('mouseup', endDrag);
+      
       grp.addEventListener('touchstart', (e) => startDrag(e.touches[0]));
       window.addEventListener('touchmove', (e) => { if(isDragging) { e.preventDefault(); moveDrag(e.touches[0]); } }, {passive: false});
       window.addEventListener('touchend', endDrag);
 
       function startDrag(e) {
+        // Ignore if touching the letter label itself to avoid conflicts
+        if (e.target.classList.contains('group-label-overlay')) return;
+        
         isDragging = true;
         startX = e.clientX;
         startY = e.clientY;
         initialLeft = grp.offsetLeft;
         initialTop = grp.offsetTop;
         grp.style.zIndex = 1000;
-        grp.style.opacity = '1'; 
+        grp.style.opacity = '0.8'; 
       }
       function moveDrag(e) {
         if (!isDragging) return;
@@ -298,7 +333,7 @@
         grp.style.top = `${initialTop + dy}px`;
       }
       function endDrag() {
-        if(isDragging) { isDragging = false; grp.style.zIndex = 100; }
+        if(isDragging) { isDragging = false; grp.style.zIndex = 100; grp.style.opacity = '1'; }
       }
     });
   </script>
