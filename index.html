@@ -11,8 +11,6 @@
     
     /* 
        AREA 1: SETUP (Top 45%)
-       Left: Screenshot source
-       Right: Group buckets 
     */
     #setup-area { display: flex; flex: 1; border-bottom: 4px solid #444; overflow: hidden; height: 45%; margin-bottom: 10px; }
     
@@ -24,7 +22,6 @@
     .group-wrapper { width: 48%; display: flex; flex-direction: column; box-sizing: border-box; }
     .group-header { font-weight: bold; margin-bottom: 3px; font-size: 0.9rem; color: #333; }
     
-    /* The container where you drop avatar cards */
     .group-container { 
       flex: 1; 
       border: 2px dashed #999; 
@@ -41,34 +38,31 @@
 
     /* 
        AREA 2: MAP (Bottom 55%)
-       This is where you drag the "Map Groups" (A, B, C, D)
     */
     #map-area { flex: 1.2; position: relative; background: #222; overflow: hidden; border: 2px solid #000; border-radius: 4px; }
-    
-    /* Placeholder background image for map */
     #map-bg { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; pointer-events: none; }
     
     /* 
-       COMPONENT: AVATAR CARD (The small square face)
+       COMPONENT: AVATAR CARD 
     */
     .avatar-card { 
       width: 60px; 
       height: 60px; 
-      /* Force square aspect ratio */
       aspect-ratio: 1 / 1; 
       border: 2px solid white; 
       box-shadow: 0 2px 4px rgba(0,0,0,0.3); 
       cursor: grab; 
       background-position: center; 
-      background-size: cover; 
+      /* 'contain' ensures the whole cropped image fits inside without getting cut off */
+      background-size: contain; 
       background-repeat: no-repeat;
+      background-color: #000; /* Dark bg for transparency */
       border-radius: 6px; 
-      position: relative; /* needed for absolute delete button */
+      position: relative; 
       flex-shrink: 0;
     }
     .avatar-card:active { cursor: grabbing; border-color: gold; }
 
-    /* Delete Button (X) on avatar */
     .delete-btn {
       position: absolute;
       top: -6px;
@@ -84,13 +78,13 @@
       font-weight: bold;
       cursor: pointer;
       border: 1px solid white;
-      display: none; /* Hidden by default, shown on hover */
+      display: none;
       z-index: 10;
     }
     .avatar-card:hover .delete-btn { display: block; }
 
     /* 
-       COMPONENT: MAP GROUP MARKER (The draggable A/B/C/D token)
+       COMPONENT: MAP GROUP MARKER 
     */
     .map-group { 
       position: absolute; 
@@ -107,12 +101,10 @@
       font-size: 1.2rem;
       box-shadow: 0 4px 8px rgba(0,0,0,0.6); 
       z-index: 100; 
-      /* Prevent selection/touches from messing up drag */
       touch-action: none; 
       user-select: none; 
     }
     
-    /* Colors for specific groups */
     #map-group-a { border-color: #e74c3c; color: #c0392b; }
     #map-group-b { border-color: #3498db; color: #2980b9; }
     #map-group-c { border-color: #2ecc71; color: #27ae60; }
@@ -126,40 +118,30 @@
 <body>
 
   <div class="controls">
-    <div>
-      <b>Guild Map Helper</b>
-    </div>
-    <div class="step-text">
-      1. Upload &rarr; 2. Click Faces &rarr; 3. Drag to Groups &rarr; 4. Move Map Tokens
-    </div>
+    <div><b>Guild Map Helper</b></div>
+    <div class="step-text">1. Upload &rarr; 2. Click Faces &rarr; 3. Drag to Groups &rarr; 4. Move Map Tokens</div>
     <input type="file" id="imageLoader" accept="image/*" />
   </div>
 
   <div id="setup-area">
-    <!-- Left: Screenshot Source -->
     <div id="source-panel">
       <span id="placeholder-text" style="margin-top:20px; color:#888;">Upload a screenshot to begin...</span>
       <img id="sourceImage" />
     </div>
     
-    <!-- Right: The 4 Group Buckets -->
     <div id="groups-panel">
-      <!-- Group A -->
       <div class="group-wrapper">
         <div class="group-header">Group A</div>
         <div class="group-container" id="group-a" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
       </div>
-      <!-- Group B -->
       <div class="group-wrapper">
         <div class="group-header">Group B</div>
         <div class="group-container" id="group-b" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
       </div>
-      <!-- Group C -->
       <div class="group-wrapper">
         <div class="group-header">Group C</div>
         <div class="group-container" id="group-c" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
       </div>
-      <!-- Group D -->
       <div class="group-wrapper">
         <div class="group-header">Group D</div>
         <div class="group-container" id="group-d" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
@@ -168,10 +150,8 @@
   </div>
 
   <div id="map-area">
-    <!-- Placeholder Map Background -->
     <img id="map-bg" src="https://via.placeholder.com/800x600/333333/ffffff?text=Map+Area+(Groups+Go+Here)" />
     
-    <!-- Draggable Map Tokens -->
     <div id="map-group-a" class="map-group" style="top: 20px; left: 20px;">A</div>
     <div id="map-group-b" class="map-group" style="top: 20px; left: 90px;">B</div>
     <div id="map-group-c" class="map-group" style="top: 20px; left: 160px;">C</div>
@@ -184,7 +164,6 @@
     const placeholderText = document.getElementById('placeholder-text');
     let avatarCount = 0;
 
-    // 1. Handle Image Upload
     imageLoader.addEventListener('change', function(e) {
       if(!e.target.files[0]) return;
       const reader = new FileReader();
@@ -196,19 +175,19 @@
       reader.readAsDataURL(e.target.files[0]);
     });
 
-    // 2. Handle Click on Screenshot to Create Square Avatar
+    // UPDATED: Bigger crop area for frames
     sourceImage.addEventListener('click', function(e) {
       if (!sourceImage.src) return;
 
-      // Create a canvas to crop the image
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const size = 120; // Resolution of the cropped image
+      
+      // Increased size from 120 to 180 to capture frames
+      const size = 180; 
       
       canvas.width = size;
       canvas.height = size;
       
-      // Calculate crop position
       const rect = sourceImage.getBoundingClientRect();
       const scaleX = sourceImage.naturalWidth / rect.width;
       const scaleY = sourceImage.naturalHeight / rect.height;
@@ -216,63 +195,49 @@
       const clickX = (e.clientX - rect.left) * scaleX;
       const clickY = (e.clientY - rect.top) * scaleY;
       
-      // Draw cropped square region centered on click
       ctx.drawImage(sourceImage, clickX - size/2, clickY - size/2, size, size, 0, 0, size, size);
       
-      // Create the avatar element container
       const avatar = document.createElement('div');
       avatar.className = 'avatar-card';
       avatar.id = 'avatar-' + avatarCount++;
       avatar.draggable = true;
       avatar.style.backgroundImage = `url(${canvas.toDataURL()})`;
       
-      // Create Delete Button (X)
       const delBtn = document.createElement('div');
       delBtn.className = 'delete-btn';
       delBtn.innerText = 'X';
       delBtn.onclick = function(evt) {
-        evt.stopPropagation(); // Stop click from triggering anything else
-        avatar.remove(); // Remove the avatar card
+        evt.stopPropagation(); 
+        avatar.remove(); 
       };
-      
       avatar.appendChild(delBtn);
 
-      // Add drag events
       avatar.ondragstart = drag;
-      
-      // Add to Group A by default (user can move it later)
       document.getElementById('group-a').appendChild(avatar);
     });
 
-    // 3. Drag and Drop Logic for Avatars (Desktop)
     function allowDrop(ev) { ev.preventDefault(); }
     function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
     function drop(ev) {
       ev.preventDefault();
       var data = ev.dataTransfer.getData("text");
       const draggedElement = document.getElementById(data);
-      // Only allow dropping inside group containers
       if(ev.target.classList.contains('group-container')) {
         ev.target.appendChild(draggedElement);
       } else if (ev.target.closest('.group-container')) {
-        // If dropped on another card inside container, append to container
         ev.target.closest('.group-container').appendChild(draggedElement);
       }
     }
 
-    // 4. Map Group Dragging Logic (Supports Mouse & Touch)
     const mapGroups = document.querySelectorAll('.map-group');
-    
     mapGroups.forEach(grp => {
       let isDragging = false;
       let startX, startY, initialLeft, initialTop;
 
-      // Mouse events
       grp.addEventListener('mousedown', startDrag);
       window.addEventListener('mousemove', moveDrag);
       window.addEventListener('mouseup', endDrag);
       
-      // Touch events
       grp.addEventListener('touchstart', (e) => startDrag(e.touches[0]));
       window.addEventListener('touchmove', (e) => {
          if(isDragging) { e.preventDefault(); moveDrag(e.touches[0]); }
@@ -293,13 +258,8 @@
         if (!isDragging) return;
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
-        
-        // Simple boundary check (optional, keeps it roughly in map area)
-        const newLeft = initialLeft + dx;
-        const newTop = initialTop + dy;
-        
-        grp.style.left = `${newLeft}px`;
-        grp.style.top = `${newTop}px`;
+        grp.style.left = `${initialLeft + dx}px`;
+        grp.style.top = `${initialTop + dy}px`;
       }
 
       function endDrag() {
