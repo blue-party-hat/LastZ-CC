@@ -6,33 +6,58 @@
   <title>Guild Map Helper</title>
   <style>
     /* DARK THEME RESET */
-    body { font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 10px; box-sizing: border-box; overflow: hidden; background: #222; color: #eee; }
+    body { font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; background: #222; color: #eee; }
     
-    /* TOP AREA: SETUP */
-    #setup-area { display: flex; flex: 1; border-bottom: 4px solid #444; overflow: hidden; height: 40%; margin-bottom: 10px; background: #333; }
+    /* TAB HEADER */
+    .tabs { display: flex; background: #333; border-bottom: 2px solid #555; height: 50px; }
+    .tab-btn {
+      flex: 1; border: none; background: #333; color: #aaa; 
+      font-size: 1rem; font-weight: bold; cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .tab-btn:hover { background: #444; color: #fff; }
+    .tab-btn.active { background: #222; color: gold; border-bottom: 3px solid gold; }
+
+    /* MAIN CONTENT AREA */
+    .tab-content { display: none; height: calc(100vh - 50px); width: 100%; overflow: hidden; }
+    .tab-content.active { display: flex; }
+
+    /* TAB 1: SELECTION (Split View) */
+    #tab-selection { flex-direction: row; }
     
-    #source-panel { width: 35%; padding: 10px; border-right: 2px solid #555; overflow: auto; background: #2a2a2a; display: flex; align-items: flex-start; justify-content: center; }
-    #source-panel img { max-width: 100%; border: 2px solid #444; display: none; cursor: crosshair; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    #source-panel { 
+      width: 40%; height: 100%; padding: 10px; border-right: 2px solid #444; 
+      overflow: auto; background: #2a2a2a; display: flex; flex-direction: column; align-items: center; 
+    }
+    #source-panel img { max-width: 100%; border: 2px solid #444; display: none; cursor: crosshair; margin-top: 10px; }
     
-    #groups-panel { width: 65%; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; background: #333; overflow-y: auto; align-content: flex-start; }
+    #groups-panel { 
+      width: 60%; height: 100%; padding: 20px; 
+      overflow-y: auto; background: #333; display: flex; flex-wrap: wrap; gap: 15px; align-content: flex-start; 
+    }
     
-    .group-wrapper { width: 32%; display: flex; flex-direction: column; }
-    .group-header { font-weight: bold; margin-bottom: 3px; font-size: 0.9rem; color: #ccc; }
+    .group-wrapper { width: 48%; display: flex; flex-direction: column; min-height: 200px; }
+    .group-header { font-weight: bold; margin-bottom: 5px; font-size: 1.1rem; color: #ccc; }
     
     .group-container { 
-      flex: 1; border: 2px dashed #666; min-height: 70px; background: #444;
-      padding: 5px; display: flex; flex-wrap: wrap; gap: 5px; border-radius: 4px; 
+      flex: 1; border: 2px dashed #666; background: #444;
+      padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; border-radius: 6px; 
     }
     .group-container:hover { border-color: #888; background: #555; }
 
-    /* BOTTOM AREA: MAP */
-    #map-area { flex: 1.5; position: relative; background: #111; overflow: hidden; border: 2px solid #000; border-radius: 4px; }
+    /* TAB 2: MAP (Full View) */
+    #tab-map { position: relative; background: #111; }
     
-    #map-bg { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; pointer-events: none; }
+    #map-bg { 
+      width: 100%; height: 100%; 
+      object-fit: contain; object-position: center; 
+      display: block; pointer-events: none; 
+    }
 
-    /* CARDS (Top Panel) */
+    /* CARDS */
     .avatar-card { 
-      width: 50px; height: 50px; aspect-ratio: 1/1; 
+      width: 60px; height: 60px; /* Bigger in selection tab */
+      aspect-ratio: 1/1; 
       border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.5); 
       cursor: grab; background-position: center; background-size: contain; background-repeat: no-repeat; 
       background-color: #000; border-radius: 6px; position: relative; flex-shrink: 0; 
@@ -40,9 +65,9 @@
     .avatar-card:active { cursor: grabbing; border-color: gold; }
 
     .delete-btn {
-      position: absolute; top: -6px; right: -6px; width: 16px; height: 16px;
+      position: absolute; top: -6px; right: -6px; width: 18px; height: 18px;
       background: red; color: white; border-radius: 50%; text-align: center;
-      line-height: 14px; font-size: 10px; font-weight: bold; cursor: pointer;
+      line-height: 16px; font-size: 12px; font-weight: bold; cursor: pointer;
       border: 1px solid white; display: none; z-index: 10;
     }
     .avatar-card:hover .delete-btn { display: block; }
@@ -50,33 +75,20 @@
     /* MAP TOKENS */
     .map-group { 
       position: absolute; 
-      width: 100px; height: 80px; /* Adjusted height for 2 rows */
-      
-      /* SEMI-TRANSPARENT BACKGROUND */
+      width: 100px; height: 80px; 
       background: rgba(255, 255, 255, 0.4); 
-      
       border: 3px solid gold; border-radius: 8px; 
       cursor: move; 
-      
-      /* 3x2 Grid for 6 players (bigger icons) */
-      display: grid; 
-      grid-template-columns: 1fr 1fr 1fr; 
-      grid-template-rows: 1fr 1fr; 
+      display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; 
       gap: 1px; padding: 2px; 
-      
       box-shadow: 0 4px 8px rgba(0,0,0,0.5); 
-      z-index: 100; user-select: none; 
-      
-      /* IMPORTANT: Allow label to float outside without being cut off */
-      overflow: visible; 
+      z-index: 100; user-select: none; overflow: visible; 
     }
 
     .mini-avatar { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; border-radius: 2px; }
     
-    /* FLOATING LABEL (Outside Box) */
     .group-label-overlay {
-      position: absolute; 
-      top: -24px; left: -10px; 
+      position: absolute; top: -24px; left: -10px; 
       background: white; border: 2px solid inherit;
       color: #333; font-weight: bold; font-size: 14px;
       padding: 2px 8px; border-radius: 12px;
@@ -85,7 +97,7 @@
       white-space: nowrap;
     }
 
-    /* Group Colors (Border & Label only, bg is handled by opacity) */
+    /* COLORS */
     #map-group-a { border-color: #e74c3c; background-color: rgba(231, 76, 60, 0.3); }
     #map-group-b { border-color: #3498db; background-color: rgba(52, 152, 219, 0.3); }
     #map-group-c { border-color: #2ecc71; background-color: rgba(46, 204, 113, 0.3); }
@@ -95,25 +107,32 @@
     
     .group-label-overlay { background: #fff; border-color: inherit; }
 
-    .controls { background: #444; padding: 10px; margin-bottom: 5px; color: #fff; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
+    /* UPLOAD BUTTON STYLING */
+    .upload-btn-wrapper { margin-bottom: 10px; width: 100%; text-align: center; }
+    input[type=file] { color: #eee; }
+
   </style>
 </head>
 <body>
 
-  <div class="controls">
-    <div><b>Guild Map Helper</b></div>
-    <div style="font-size: 0.9rem; color:#ccc;">1. Upload &rarr; 2. Click Faces &rarr; 3. Drag to Map</div>
-    <input type="file" id="imageLoader" accept="image/*" style="color:white;" />
+  <!-- TAB NAVIGATION -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="openTab('tab-selection')">1. Assign Groups</button>
+    <button class="tab-btn" onclick="openTab('tab-map')">2. Map Strategy</button>
   </div>
 
-  <div id="setup-area">
+  <!-- TAB 1: SELECTION -->
+  <div id="tab-selection" class="tab-content active">
     <div id="source-panel">
-      <span id="placeholder-text" style="margin-top:20px; color:#888;">Upload screenshot here...</span>
+      <div class="upload-btn-wrapper">
+        <span style="display:block; margin-bottom:5px; color:#aaa;">Step 1: Upload Screenshot</span>
+        <input type="file" id="imageLoader" accept="image/*" />
+      </div>
+      <span id="placeholder-text" style="margin-top:50px; color:#666;">(Screenshot will appear here)</span>
       <img id="sourceImage" alt="Uploaded Screenshot" />
     </div>
     
     <div id="groups-panel">
-      <!-- 6 Groups -->
       <div class="group-wrapper"><div class="group-header">Group A</div><div class="group-container" id="group-a" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
       <div class="group-wrapper"><div class="group-header">Group B</div><div class="group-container" id="group-b" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
       <div class="group-wrapper"><div class="group-header">Group C</div><div class="group-container" id="group-c" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
@@ -123,24 +142,40 @@
     </div>
   </div>
 
-  <div id="map-area">
+  <!-- TAB 2: MAP -->
+  <div id="tab-map" class="tab-content">
     <img id="map-bg" src="map.png" alt="MAP LOADING... (Ensure file is named map.png)" />
     
     <!-- Map Tokens -->
-    <div id="map-group-a" class="map-group" style="top: 20px; left: 20px;"><div class="group-label-overlay">A</div></div>
-    <div id="map-group-b" class="map-group" style="top: 20px; left: 140px;"><div class="group-label-overlay">B</div></div>
-    <div id="map-group-c" class="map-group" style="top: 20px; left: 260px;"><div class="group-label-overlay">C</div></div>
-    <div id="map-group-d" class="map-group" style="top: 20px; left: 380px;"><div class="group-label-overlay">D</div></div>
-    <div id="map-group-y" class="map-group" style="top: 20px; left: 500px;"><div class="group-label-overlay">Y</div></div>
-    <div id="map-group-z" class="map-group" style="top: 20px; left: 620px;"><div class="group-label-overlay">Z</div></div>
+    <div id="map-group-a" class="map-group" style="top: 50px; left: 50px;"><div class="group-label-overlay">A</div></div>
+    <div id="map-group-b" class="map-group" style="top: 50px; left: 180px;"><div class="group-label-overlay">B</div></div>
+    <div id="map-group-c" class="map-group" style="top: 50px; left: 310px;"><div class="group-label-overlay">C</div></div>
+    <div id="map-group-d" class="map-group" style="top: 50px; left: 440px;"><div class="group-label-overlay">D</div></div>
+    <div id="map-group-y" class="map-group" style="top: 50px; left: 570px;"><div class="group-label-overlay">Y</div></div>
+    <div id="map-group-z" class="map-group" style="top: 50px; left: 700px;"><div class="group-label-overlay">Z</div></div>
   </div>
 
   <script>
+    // TAB LOGIC
+    function openTab(tabId) {
+      // Hide all contents
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      
+      // Show target
+      document.getElementById(tabId).classList.add('active');
+      
+      // Highlight button
+      const btnIndex = tabId === 'tab-selection' ? 0 : 1;
+      document.querySelectorAll('.tab-btn')[btnIndex].classList.add('active');
+    }
+
     const imageLoader = document.getElementById('imageLoader');
     const sourceImage = document.getElementById('sourceImage');
     const placeholderText = document.getElementById('placeholder-text');
     let avatarCount = 0;
 
+    // UPLOAD
     imageLoader.addEventListener('change', function(e) {
       if(!e.target.files || !e.target.files[0]) return;
       const reader = new FileReader();
@@ -152,12 +187,12 @@
       reader.readAsDataURL(e.target.files[0]);
     });
 
+    // CLICK FACE
     sourceImage.addEventListener('click', function(e) {
       if (!sourceImage.src || sourceImage.style.display === 'none') return;
 
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      // Max quality crop
       const size = 180; 
       canvas.width = size; canvas.height = size;
       
@@ -165,106 +200,4 @@
       const scaleX = sourceImage.naturalWidth / rect.width;
       const scaleY = sourceImage.naturalHeight / rect.height;
       const clickX = (e.clientX - rect.left) * scaleX;
-      const clickY = (e.clientY - rect.top) * scaleY;
-      
-      ctx.drawImage(sourceImage, clickX - size/2, clickY - size/2, size, size, 0, 0, size, size);
-      const imgData = canvas.toDataURL();
-
-      const avatar = document.createElement('div');
-      avatar.className = 'avatar-card';
-      avatar.id = 'avatar-' + avatarCount++;
-      avatar.draggable = true;
-      avatar.style.backgroundImage = `url(${imgData})`;
-      avatar.dataset.img = imgData;
-      
-      const delBtn = document.createElement('div');
-      delBtn.className = 'delete-btn';
-      delBtn.innerText = 'X';
-      delBtn.onclick = function(evt) { 
-        evt.stopPropagation(); 
-        const parentGroup = avatar.closest('.group-container');
-        avatar.remove(); 
-        if(parentGroup) updateMapToken(parentGroup.id);
-      };
-      avatar.appendChild(delBtn);
-
-      avatar.ondragstart = drag;
-      document.getElementById('group-a').appendChild(avatar);
-      updateMapToken('group-a');
-    });
-
-    function allowDrop(ev) { ev.preventDefault(); }
-    function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
-    function drop(ev) {
-      ev.preventDefault();
-      var data = ev.dataTransfer.getData("text");
-      const draggedElement = document.getElementById(data);
-      const targetContainer = ev.target.closest('.group-container');
-      
-      if(targetContainer) {
-        targetContainer.appendChild(draggedElement);
-        updateAllMapTokens();
-      }
-    }
-
-    function updateAllMapTokens() {
-      ['a','b','c','d','y','z'].forEach(id => updateMapToken('group-' + id));
-    }
-
-    function updateMapToken(groupId) {
-      const groupLetter = groupId.split('-')[1]; 
-      const mapToken = document.getElementById('map-group-' + groupLetter);
-      if(!mapToken) return;
-      const container = document.getElementById(groupId);
-      
-      const label = mapToken.querySelector('.group-label-overlay');
-      mapToken.innerHTML = ''; 
-      mapToken.appendChild(label);
-
-      const avatars = container.querySelectorAll('.avatar-card');
-      // Limit to 6 for 3x2 grid
-      avatars.forEach((av, index) => {
-        if(index < 6) {
-           const mini = document.createElement('div');
-           mini.className = 'mini-avatar';
-           mini.style.backgroundImage = `url(${av.dataset.img})`;
-           mapToken.appendChild(mini);
-        }
-      });
-    }
-
-    const mapGroups = document.querySelectorAll('.map-group');
-    mapGroups.forEach(grp => {
-      let isDragging = false;
-      let startX, startY, initialLeft, initialTop;
-
-      grp.addEventListener('mousedown', startDrag);
-      window.addEventListener('mousemove', moveDrag);
-      window.addEventListener('mouseup', endDrag);
-      grp.addEventListener('touchstart', (e) => startDrag(e.touches[0]));
-      window.addEventListener('touchmove', (e) => { if(isDragging) { e.preventDefault(); moveDrag(e.touches[0]); } }, {passive: false});
-      window.addEventListener('touchend', endDrag);
-
-      function startDrag(e) {
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        initialLeft = grp.offsetLeft;
-        initialTop = grp.offsetTop;
-        grp.style.zIndex = 1000;
-        grp.style.opacity = '1'; /* Keep opaque while dragging to see clearly */
-      }
-      function moveDrag(e) {
-        if (!isDragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        grp.style.left = `${initialLeft + dx}px`;
-        grp.style.top = `${initialTop + dy}px`;
-      }
-      function endDrag() {
-        if(isDragging) { isDragging = false; grp.style.zIndex = 100; }
-      }
-    });
-  </script>
-</body>
-</html>
+      const clickY =
