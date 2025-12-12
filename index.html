@@ -8,8 +8,22 @@
     /* DARK THEME RESET */
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; background: #222; color: #eee; }
     
+    /* TOP DATA BAR (SAVE/LOAD) */
+    .data-bar { 
+      background: #1a1a1a; padding: 8px 10px; border-bottom: 1px solid #444; 
+      display: flex; gap: 10px; align-items: center; justify-content: flex-end;
+      flex-shrink: 0;
+    }
+    .data-btn {
+      background: #444; color: white; border: 1px solid #666;
+      padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .data-btn:active { background: #666; }
+    #fileInput { display: none; }
+
     /* TABS */
-    .tabs { display: flex; background: #333; border-bottom: 2px solid #555; height: 60px; flex-shrink: 0; }
+    .tabs { display: flex; background: #333; border-bottom: 2px solid #555; height: 50px; flex-shrink: 0; }
     .tab-btn {
       flex: 1; border: none; background: #333; color: #aaa; 
       font-size: 1rem; font-weight: bold; cursor: pointer;
@@ -18,21 +32,24 @@
     .tab-btn.active { background: #222; color: gold; border-bottom: 4px solid gold; }
 
     /* CONTENT AREA */
-    .tab-content { display: none; height: calc(100% - 60px); width: 100%; overflow: hidden; flex-direction: column; }
+    .tab-content { display: none; height: calc(100% - 90px); width: 100%; overflow: hidden; flex-direction: column; }
     .tab-content.active { display: flex; }
 
     /* TAB 1: SELECTION */
     #tab-selection { flex-direction: column; }
     
     #source-panel { 
-      width: 100%; height: 40%; padding: 10px; border-bottom: 2px solid #444; 
+      width: 100%; height: 45%; padding: 10px; border-bottom: 2px solid #444; 
       overflow: auto; background: #2a2a2a; display: flex; flex-direction: column; align-items: center; 
     }
     #source-panel img { max-width: 100%; display: none; cursor: crosshair; margin-top: 5px; border: 2px solid #555; }
     
+    /* SCROLLABLE GROUPS AREA */
     #groups-panel { 
-      width: 100%; height: 60%; padding: 10px; 
+      width: 100%; height: 55%; padding: 10px; 
       overflow-y: auto; background: #333; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; 
+      /* Extra padding at bottom so last row isn't cut off */
+      padding-bottom: 80px; 
     }
     
     .group-wrapper { width: 48%; display: flex; flex-direction: column; min-height: 140px; cursor: pointer; }
@@ -41,19 +58,31 @@
       padding: 4px; border-radius: 4px; transition: 0.2s;
     }
     
-    /* ACTIVE GROUP STYLING */
-    .group-wrapper.active-target .group-header {
-      background: gold; color: #000;
-    }
-    .group-wrapper.active-target .group-container {
-      border-color: gold; background: #3a3a3a;
-    }
-    
     .group-container { 
-      flex: 1; border: 2px dashed #666; background: #444;
+      flex: 1; border: 2px dashed #555; background: #444;
       padding: 5px; display: flex; flex-wrap: wrap; gap: 5px; border-radius: 6px; 
+      transition: border-color 0.2s, background-color 0.2s;
     }
-    .group-container.drag-over { background: #555; border-color: #aaa; }
+
+    /* DYNAMIC ACTIVE COLORS (Matching Map Tokens) */
+    .group-wrapper.active-target[data-id="group-a"] .group-header { background: #e74c3c; color: white; }
+    .group-wrapper.active-target[data-id="group-a"] .group-container { border-color: #e74c3c; background: rgba(231, 76, 60, 0.1); }
+
+    .group-wrapper.active-target[data-id="group-b"] .group-header { background: #3498db; color: white; }
+    .group-wrapper.active-target[data-id="group-b"] .group-container { border-color: #3498db; background: rgba(52, 152, 219, 0.1); }
+
+    .group-wrapper.active-target[data-id="group-c"] .group-header { background: #2ecc71; color: white; }
+    .group-wrapper.active-target[data-id="group-c"] .group-container { border-color: #2ecc71; background: rgba(46, 204, 113, 0.1); }
+
+    .group-wrapper.active-target[data-id="group-d"] .group-header { background: #f1c40f; color: black; }
+    .group-wrapper.active-target[data-id="group-d"] .group-container { border-color: #f1c40f; background: rgba(241, 196, 15, 0.1); }
+
+    .group-wrapper.active-target[data-id="group-y"] .group-header { background: #1abc9c; color: white; }
+    .group-wrapper.active-target[data-id="group-y"] .group-container { border-color: #1abc9c; background: rgba(26, 188, 156, 0.1); }
+
+    .group-wrapper.active-target[data-id="group-z"] .group-header { background: #d500f9; color: white; }
+    .group-wrapper.active-target[data-id="group-z"] .group-container { border-color: #d500f9; background: rgba(213, 0, 249, 0.1); }
+
 
     /* TAB 2: MAP */
     #tab-map { position: relative; background: #111; touch-action: none; }
@@ -112,11 +141,16 @@
     .group-label-overlay { background: #fff; border-color: inherit; }
 
     .upload-btn-wrapper { margin-bottom: 10px; width: 100%; text-align: center; }
-    input[type=file] { color: #eee; font-size: 0.9rem; }
+    input[type=file] { color: #eee; font-size: 0.85rem; }
     
-    #placeholder-text { text-align: center; display: block; margin-top: 20px; }
+    /* INSTRUCTION TEXT */
+    #placeholder-text { 
+      text-align: left; display: block; margin-top: 10px; 
+      color: #aaa; font-size: 0.9rem; line-height: 1.6;
+      background: #333; padding: 15px; border-radius: 8px; border: 1px solid #555;
+    }
 
-    /* MOBILE: Shrink map tokens */
+    /* MOBILE QUERY */
     @media (max-width: 768px) {
       .map-group { width: 84px; height: 56px; border-width: 2px; }
       .group-label-overlay { top: -20px; font-size: 12px; padding: 2px 6px; }
@@ -124,11 +158,19 @@
     }
   </style>
   
-  <!-- MOBILE DRAG & DROP POLYFILL -->
   <script>
-  !function(e){var t,o=e.document,n="move",r="all",a={};function i(e){return e.touches?e.touches[0]:e}function d(e,t,o){if(e&&t&&o){var n=new Event(t,{bubbles:!0,cancelable:!0});n.button=0,n.buttons=1,n.altKey=e.altKey,n.ctrlKey=e.ctrlKey,n.metaKey=e.metaKey,n.shiftKey=e.shiftKey;var r=i(e);return n.clientX=r.clientX,n.clientY=r.clientY,n.screenX=r.screenX,n.screenY=r.screenY,n.dataTransfer=function(){return this._dataTransfer||(this._dataTransfer=new function(){this.dropEffect=n,this.effectAllowed=r,this._data={}}),this._dataTransfer}.call(o),o.dispatchEvent(n),n.defaultPrevented}return!1}var c=function(){function e(){var e=this;this._lastClick=0,this._dragSource=null,this._lastTouch=null,this._lastTarget=null,this._ptDown=null,this._dataTransfer=new function(){this.dropEffect=n,this.effectAllowed=r,this._data={}},this._img=null,this._imgCustom=null,this._imgOffset={x:0,y:0},"ontouchstart"in o&&(o.addEventListener("touchstart",this._touchstart.bind(this),!0),o.addEventListener("touchmove",this._touchmove.bind(this),!0),o.addEventListener("touchend",this._touchend.bind(this),!0),o.addEventListener("touchcancel",this._touchend.bind(this),!0))}return e.prototype._touchstart=function(e){var t=this;this._dragSource=null;var o=i(e).target;o&&"true"==o.getAttribute("draggable")&&(this._dragSource=o,this._ptDown=i(e),this._lastTouch=e,setTimeout(function(){t._dragSource==o&&null==t._img&&(d(e,"contextmenu",t._dragSource)&&t._reset())},500),e.preventDefault())},e.prototype._touchmove=function(e){if(this._dragSource){var t=this._lastTouch,o=i(e).target;if(o!=this._lastTarget&&(d(t,"dragleave",this._lastTarget),d(e,"dragenter",o),this._lastTarget=o),!this._img&&Math.abs(i(e).clientX-this._ptDown.clientX)>5&&(d(e,"dragstart",this._dragSource),this._createImage(e)),this._img){this._lastTouch=e,e.preventDefault(),this._moveImage(e),d(e,"dragover",o)}}},e.prototype._touchend=function(e){this._dragSource&&(this._img&&d(this._lastTouch,"drop",this._lastTarget),this._reset())},e.prototype._reset=function(){this._dragSource=null,this._lastTouch=null,this._lastTarget=null,this._ptDown=null,this._img&&this._img.parentElement&&this._img.parentElement.removeChild(this._img),this._img=null,this._imgCustom=null},e.prototype._createImage=function(e){this._img&&this._reset();var t=this._dragSource.cloneNode(!0);if(this._copyStyle(this._dragSource,t),"true"==t.getAttribute("draggable")&&t.removeAttribute("draggable"),t.style.position="absolute",t.style.zIndex=999999,t.style.pointerEvents="none",t.style.opacity=".5",o.body.appendChild(t),this._img=t,this._imgCustom){var n=this._dragSource.getBoundingClientRect();this._ptDown.x=n.left+this._imgOffset.x,this._ptDown.y=n.top+this._imgOffset.y}else{var r=this._dragSource.getBoundingClientRect();this._ptDown.x-=r.left,this._ptDown.y-=r.top}this._moveImage(e)},e.prototype._moveImage=function(e){var t=this,o=i(e);requestAnimationFrame(function(){t._img.style.transform="translate("+(o.clientX-t._ptDown.x)+"px, "+(o.clientY-t._ptDown.y)+"px)"})},e.prototype._copyStyle=function(e,t){["id","class","style","draggable"].forEach(function(e){t.removeAttribute(e)});var n=getComputedStyle(e);for(var r=0;r<n.length;r++){var a=n[r];t.style[a]=n[a]}},e}();t=new c,e.DragDropTouch=t}(DragDropTouch||(DragDropTouch={}))</script>
+  /* DragDropTouch Polyfill */
+  !function(e){var t,o=e.document,n="move",r="all",a={};function i(e){return e.touches?e.touches[0]:e}function d(e,t,o){if(e&&t&&o){var n=new Event(t,{bubbles:!0,cancelable:!0});n.button=0,n.buttons=1,n.altKey=e.altKey,n.ctrlKey=e.ctrlKey,n.metaKey=e.metaKey,n.shiftKey=e.shiftKey;var r=i(e);return n.clientX=r.clientX,n.clientY=r.clientY,n.screenX=r.screenX,n.screenY=r.screenY,n.dataTransfer=function(){return this._dataTransfer||(this._dataTransfer=new function(){this.dropEffect=n,this.effectAllowed=r,this._data={}}),this._dataTransfer}.call(o),o.dispatchEvent(n),n.defaultPrevented}return!1}var c=function(){function e(){var e=this;this._lastClick=0,this._dragSource=null,this._lastTouch=null,this._lastTarget=null,this._ptDown=null,this._dataTransfer=new function(){this.dropEffect=n,this.effectAllowed=r,this._data={}},this._img=null,this._imgCustom=null,this._imgOffset={x:0,y:0},"ontouchstart"in o&&(o.addEventListener("touchstart",this._touchstart.bind(this),!0),o.addEventListener("touchmove",this._touchmove.bind(this),!0),o.addEventListener("touchend",this._touchend.bind(this),!0),o.addEventListener("touchcancel",this._touchend.bind(this),!0))}return e.prototype._touchstart=function(e){var t=this;this._dragSource=null;var o=i(e).target;o&&"true"==o.getAttribute("draggable")&&(this._dragSource=o,this._ptDown=i(e),this._lastTouch=e,setTimeout(function(){t._dragSource==o&&null==t._img&&(d(e,"contextmenu",t._dragSource)&&t._reset())},500),e.preventDefault())},e.prototype._touchmove=function(e){if(this._dragSource){var t=this._lastTouch,o=i(e).target;if(o!=this._lastTarget&&(d(t,"dragleave",this._lastTarget),d(e,"dragenter",o),this._lastTarget=o),!this._img&&Math.abs(i(e).clientX-this._ptDown.clientX)>5&&(d(e,"dragstart",this._dragSource),this._createImage(e)),this._img){this._lastTouch=e,e.preventDefault(),this._moveImage(e),d(e,"dragover",o)}}},e.prototype._touchend=function(e){this._dragSource&&(this._img&&d(this._lastTouch,"drop",this._lastTarget),this._reset())},e.prototype._reset=function(){this._dragSource=null,this._lastTouch=null,this._lastTarget=null,this._ptDown=null,this._img&&this._img.parentElement&&this._img.parentElement.removeChild(this._img),this._img=null,this._imgCustom=null},e.prototype._createImage=function(e){this._img&&this._reset();var t=this._dragSource.cloneNode(!0);if(this._copyStyle(this._dragSource,t),"true"==t.getAttribute("draggable")&&t.removeAttribute("draggable"),t.style.position="absolute",t.style.zIndex=999999,t.style.pointerEvents="none",t.style.opacity=".5",o.body.appendChild(t),this._img=t,this._imgCustom){var n=this._dragSource.getBoundingClientRect();this._ptDown.x=n.left+this._imgOffset.x,this._ptDown.y=n.top+this._imgOffset.y}else{var r=this._dragSource.getBoundingClientRect();this._ptDown.x-=r.left,this._ptDown.y-=r.top}this._moveImage(e)},e.prototype._moveImage=function(e){var t=this,o=i(e);requestAnimationFrame(function(){t._img.style.transform="translate("+(o.clientX-t._ptDown.x)+"px, "+(o.clientY-t._ptDown.y)+"px)"})},e.prototype._copyStyle=function(e,t){["id","class","style","draggable"].forEach(function(e){t.removeAttribute(e)});var n=getComputedStyle(e);for(var r=0;r<n.length;r++){var a=n[r];t.style[a]=n[a]}},e}();t=new c,e.DragDropTouch=t}(DragDropTouch||(DragDropTouch={}))
+  </script>
 </head>
 <body>
+
+  <!-- DATA BAR -->
+  <div class="data-bar">
+    <button class="data-btn" onclick="saveProject()">💾 Save</button>
+    <button class="data-btn" onclick="document.getElementById('fileInput').click()">📂 Load</button>
+    <input type="file" id="fileInput" accept=".json" onchange="loadProject(this)" />
+  </div>
 
   <div class="tabs">
     <button class="tab-btn active" onclick="openTab('tab-selection')">１．グループ決め</button>
@@ -138,21 +180,24 @@
   <div id="tab-selection" class="tab-content active">
     <div id="source-panel">
       <div class="upload-btn-wrapper">
-        <span style="display:block; margin-bottom:5px; color:#aaa;">Step 1: Upload Screenshot</span>
         <input type="file" id="imageLoader" accept="image/*" />
       </div>
-      <span id="placeholder-text" style="color:#666;">(Tap Group, then Tap Faces)</span>
+      <div id="placeholder-text">
+        Step1: 峡谷グループのスクショをアップロードします<br>
+        Step2: 下のグループをタップして選択 (赤くなります)<br>
+        Step3: アバターの中心をタップすると選択したグループに入ります
+      </div>
       <img id="sourceImage" alt="Uploaded Screenshot" />
     </div>
     
     <div id="groups-panel">
       <!-- Click wrapper to set Active Group -->
-      <div class="group-wrapper active-target" onclick="setActiveGroup('group-a', this)"><div class="group-header">Group A</div><div class="group-container" id="group-a" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
-      <div class="group-wrapper" onclick="setActiveGroup('group-b', this)"><div class="group-header">Group B</div><div class="group-container" id="group-b" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
-      <div class="group-wrapper" onclick="setActiveGroup('group-c', this)"><div class="group-header">Group C</div><div class="group-container" id="group-c" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
-      <div class="group-wrapper" onclick="setActiveGroup('group-d', this)"><div class="group-header">Group D</div><div class="group-container" id="group-d" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
-      <div class="group-wrapper" onclick="setActiveGroup('group-y', this)"><div class="group-header">Group Y</div><div class="group-container" id="group-y" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
-      <div class="group-wrapper" onclick="setActiveGroup('group-z', this)"><div class="group-header">Group Z</div><div class="group-container" id="group-z" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper active-target" data-id="group-a" onclick="setActiveGroup('group-a', this)"><div class="group-header">Group A</div><div class="group-container" id="group-a" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper" data-id="group-b" onclick="setActiveGroup('group-b', this)"><div class="group-header">Group B</div><div class="group-container" id="group-b" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper" data-id="group-c" onclick="setActiveGroup('group-c', this)"><div class="group-header">Group C</div><div class="group-container" id="group-c" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper" data-id="group-d" onclick="setActiveGroup('group-d', this)"><div class="group-header">Group D</div><div class="group-container" id="group-d" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper" data-id="group-y" onclick="setActiveGroup('group-y', this)"><div class="group-header">Group Y</div><div class="group-container" id="group-y" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper" data-id="group-z" onclick="setActiveGroup('group-z', this)"><div class="group-header">Group Z</div><div class="group-container" id="group-z" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
     </div>
   </div>
 
@@ -216,7 +261,6 @@
       const rect = sourceImage.getBoundingClientRect();
       const scaleX = sourceImage.naturalWidth / rect.width;
       const scaleY = sourceImage.naturalHeight / rect.height;
-      
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       const domX = clientX - rect.left;
@@ -227,6 +271,10 @@
       ctx.drawImage(sourceImage, clickX - size/2, clickY - size/2, size, size, 0, 0, size, size);
       const imgData = canvas.toDataURL();
 
+      createAvatar(imgData, currentGroupId);
+    };
+
+    function createAvatar(imgData, targetGroupId) {
       const avatar = document.createElement('div');
       avatar.className = 'avatar-card';
       avatar.id = 'avatar-' + avatarCount++;
@@ -237,25 +285,24 @@
       const delBtn = document.createElement('div');
       delBtn.className = 'delete-btn';
       delBtn.innerText = 'X';
-      
       const deleteAction = (evt) => { 
         evt.stopPropagation(); evt.preventDefault();
         const parentGroup = avatar.closest('.group-container');
         avatar.remove(); 
         if(parentGroup) updateMapToken(parentGroup.id);
       };
-      
       delBtn.addEventListener('click', deleteAction);
       delBtn.addEventListener('touchend', deleteAction);
       avatar.appendChild(delBtn);
 
       avatar.ondragstart = drag;
       
-      // ADD TO SELECTED GROUP
-      const targetGroup = document.getElementById(currentGroupId) || document.getElementById('group-a');
-      targetGroup.appendChild(avatar);
-      updateMapToken(currentGroupId);
-    };
+      const targetGroup = document.getElementById(targetGroupId);
+      if(targetGroup) {
+          targetGroup.appendChild(avatar);
+          updateMapToken(targetGroupId);
+      }
+    }
 
     sourceImage.addEventListener('click', handleCrop);
 
@@ -269,14 +316,10 @@
       if (!draggedElement) return;
 
       const targetContainer = ev.target.closest('.group-container');
-      
       if(targetContainer) {
         targetContainer.classList.remove('drag-over');
         targetContainer.appendChild(draggedElement);
-        // Force update of the group we dropped INTO
         updateMapToken(targetContainer.id);
-        
-        // Also update ALL tokens just to be safe (in case it moved FROM another group)
         updateAllMapTokens();
       }
     }
@@ -317,7 +360,6 @@
     mapGroups.forEach(grp => {
       let isDragging = false;
       let startX, startY, initialLeft, initialTop;
-
       grp.addEventListener('mousedown', startDrag);
       window.addEventListener('mousemove', moveDrag);
       window.addEventListener('mouseup', endDrag);
@@ -346,6 +388,66 @@
         if(isDragging) { isDragging = false; grp.style.zIndex = 100; grp.style.opacity = '1'; }
       }
     });
+
+    /* --- SAVE / LOAD FUNCTIONALITY --- */
+    function saveProject() {
+      const projectData = {
+        groups: {},
+        mapPositions: {}
+      };
+      ['a','b','c','d','y','z'].forEach(id => {
+        const container = document.getElementById('group-' + id);
+        const avatars = [];
+        container.querySelectorAll('.avatar-card').forEach(card => {
+          avatars.push(card.dataset.img); 
+        });
+        projectData.groups[id] = avatars;
+      });
+      ['a','b','c','d','y','z'].forEach(id => {
+        const token = document.getElementById('map-group-' + id);
+        projectData.mapPositions[id] = {
+          top: token.style.top,
+          left: token.style.left
+        };
+      });
+      const dataStr = JSON.stringify(projectData);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = 'guild_map_save.json';
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+    }
+
+    function loadProject(input) {
+      const file = input.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          document.querySelectorAll('.group-container').forEach(el => el.innerHTML = '');
+          Object.keys(data.groups).forEach(groupId => {
+            data.groups[groupId].forEach(imgData => {
+              createAvatar(imgData, 'group-' + groupId);
+            });
+          });
+          Object.keys(data.mapPositions).forEach(id => {
+            const token = document.getElementById('map-group-' + id);
+            const pos = data.mapPositions[id];
+            token.style.top = pos.top;
+            token.style.left = pos.left;
+          });
+          updateAllMapTokens();
+          alert("Project Loaded Successfully!");
+        } catch (err) {
+          alert("Error loading file: " + err);
+        }
+      };
+      reader.readAsText(file);
+    }
   </script>
 </body>
 </html>
