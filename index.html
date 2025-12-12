@@ -5,69 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Guild Map Helper</title>
   <style>
-    /* DARK MODE STYLING */
+    /* DARK THEME RESET */
     body { font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 10px; box-sizing: border-box; overflow: hidden; background: #222; color: #eee; }
     
     /* TOP AREA: SETUP */
-    #setup-area { display: flex; flex: 1; border-bottom: 4px solid #555; overflow: hidden; height: 40%; margin-bottom: 10px; background: #333; }
+    #setup-area { display: flex; flex: 1; border-bottom: 4px solid #444; overflow: hidden; height: 40%; margin-bottom: 10px; background: #333; }
     
     /* Left: Screenshot */
     #source-panel { width: 35%; padding: 10px; border-right: 2px solid #555; overflow: auto; background: #2a2a2a; display: flex; align-items: flex-start; justify-content: center; }
-    #source-panel img { max-width: 100%; border: 2px solid #444; cursor: crosshair; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+    #source-panel img { max-width: 100%; border: 2px solid #444; display: none; cursor: crosshair; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     
     /* Right: Groups */
     #groups-panel { width: 65%; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; background: #333; overflow-y: auto; align-content: flex-start; }
     
-    .group-wrapper { width: 32%; display: flex; flex-direction: column; box-sizing: border-box; }
+    .group-wrapper { width: 32%; display: flex; flex-direction: column; }
     .group-header { font-weight: bold; margin-bottom: 3px; font-size: 0.9rem; color: #ccc; }
     
     .group-container { 
-      flex: 1; 
-      border: 2px dashed #666; 
-      min-height: 70px; 
-      background: #444;
-      padding: 5px; 
-      display: flex; 
-      flex-wrap: wrap; 
-      gap: 5px; 
-      border-radius: 4px; 
-      align-content: flex-start;
+      flex: 1; border: 2px dashed #666; min-height: 70px; background: #444;
+      padding: 5px; display: flex; flex-wrap: wrap; gap: 5px; border-radius: 4px; 
     }
     .group-container:hover { border-color: #888; background: #555; }
 
     /* BOTTOM AREA: MAP */
     #map-area { flex: 1.5; position: relative; background: #111; overflow: hidden; border: 2px solid #000; border-radius: 4px; }
     
-    /* MAP BACKGROUND IMAGE */
+    /* MAP IMAGE */
     #map-bg { 
-      width: 100%; 
-      height: 100%; 
+      width: 100%; height: 100%; 
       object-fit: contain; 
       object-position: center;
-      pointer-events: none; 
-      /* Fallback background color */
-      background: #000; 
+      display: block;
+      pointer-events: none; /* Let clicks pass through if needed, though mostly visual */
     }
-    
-    /* AVATAR CARD */
+
+    /* CARDS */
     .avatar-card { 
-      width: 50px; 
-      height: 50px; 
-      aspect-ratio: 1 / 1; 
-      border: 2px solid #fff; 
-      box-shadow: 0 2px 4px rgba(0,0,0,0.5); 
-      cursor: grab; 
-      background-position: center; 
-      background-size: contain; 
-      background-repeat: no-repeat;
-      background-color: #000; 
-      border-radius: 6px; 
-      position: relative; 
-      flex-shrink: 0;
+      width: 50px; height: 50px; aspect-ratio: 1/1; 
+      border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.5); 
+      cursor: grab; background-position: center; background-size: contain; background-repeat: no-repeat; 
+      background-color: #000; border-radius: 6px; position: relative; flex-shrink: 0; 
     }
     .avatar-card:active { cursor: grabbing; border-color: gold; }
 
-    /* Delete Button */
+    /* DELETE BUTTON */
     .delete-btn {
       position: absolute; top: -6px; right: -6px; width: 16px; height: 16px;
       background: red; color: white; border-radius: 50%; text-align: center;
@@ -78,16 +59,12 @@
 
     /* MAP TOKENS */
     .map-group { 
-      position: absolute; 
-      width: 45px; height: 45px; 
-      background: rgba(255, 255, 255, 0.9); 
-      border: 3px solid gold; border-radius: 8px; 
+      position: absolute; width: 45px; height: 45px; 
+      background: rgba(255, 255, 255, 0.9); border: 3px solid gold; border-radius: 8px; 
       cursor: move; display: flex; justify-content: center; align-items: center; 
-      font-weight: bold; font-size: 1.2rem; color: #333;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.6); z-index: 100; 
-      touch-action: none; user-select: none; 
+      font-weight: bold; font-size: 1.2rem; color: #333; z-index: 100; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.7);
     }
-    
+
     /* Group Colors */
     #map-group-a { border-color: #e74c3c; color: #c0392b; }
     #map-group-b { border-color: #3498db; color: #2980b9; }
@@ -97,22 +74,21 @@
     #map-group-y { border-color: #1abc9c; color: #16a085; }
     #map-group-z { border-color: #95a5a6; color: #7f8c8d; }
 
-    .controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; background: #444; padding: 5px 10px; border-radius: 4px; color: #eee; }
-    .step-text { font-size: 0.9rem; color: #ccc; }
+    .controls { background: #444; padding: 10px; margin-bottom: 5px; color: #fff; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
   </style>
 </head>
 <body>
 
   <div class="controls">
     <div><b>Guild Map Helper</b></div>
-    <div class="step-text">1. Upload Screenshot &rarr; 2. Click Faces &rarr; 3. Move Tokens on Map</div>
-    <input type="file" id="imageLoader" accept="image/*" style="color: #fff;" />
+    <div style="font-size: 0.9rem; color:#ccc;">1. Upload &rarr; 2. Click Faces &rarr; 3. Drag to Map</div>
+    <input type="file" id="imageLoader" accept="image/*" style="color:white;" />
   </div>
 
   <div id="setup-area">
     <div id="source-panel">
       <span id="placeholder-text" style="margin-top:20px; color:#888;">Upload screenshot here...</span>
-      <img id="sourceImage" />
+      <img id="sourceImage" alt="Uploaded Screenshot" />
     </div>
     
     <div id="groups-panel">
@@ -128,8 +104,8 @@
   </div>
 
   <div id="map-area">
-    <!-- Links to map.jpg in your repo. If missing, shows black background. -->
-    <img id="map-bg" src="map.jpg" onerror="this.style.display='none'" />
+    <!-- CHANGED TO map.png -->
+    <img id="map-bg" src="map.png" alt="MAP LOADING... (Ensure file is named map.png)" />
     
     <!-- Draggable Map Tokens -->
     <div id="map-group-a" class="map-group" style="top: 20px; left: 20px;">A</div>
@@ -147,20 +123,24 @@
     const placeholderText = document.getElementById('placeholder-text');
     let avatarCount = 0;
 
+    // 1. UPLOAD LOGIC
     imageLoader.addEventListener('change', function(e) {
-      if(!e.target.files[0]) return;
+      if(!e.target.files || !e.target.files[0]) return;
+      
+      const file = e.target.files[0];
       const reader = new FileReader();
+      
       reader.onload = function(event) {
         sourceImage.src = event.target.result;
         sourceImage.style.display = 'block';
         placeholderText.style.display = 'none';
       }
-      reader.readAsDataURL(e.target.files[0]);
+      reader.readAsDataURL(file);
     });
 
-    // CLICK -> CREATE CARD
+    // 2. CLICK FACE LOGIC
     sourceImage.addEventListener('click', function(e) {
-      if (!sourceImage.src) return;
+      if (!sourceImage.src || sourceImage.style.display === 'none') return;
 
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -212,4 +192,32 @@
       let startX, startY, initialLeft, initialTop;
 
       grp.addEventListener('mousedown', startDrag);
-      window.addEventListener('
+      window.addEventListener('mousemove', moveDrag);
+      window.addEventListener('mouseup', endDrag);
+      grp.addEventListener('touchstart', (e) => startDrag(e.touches[0]));
+      window.addEventListener('touchmove', (e) => { if(isDragging) { e.preventDefault(); moveDrag(e.touches[0]); } }, {passive: false});
+      window.addEventListener('touchend', endDrag);
+
+      function startDrag(e) {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialLeft = grp.offsetLeft;
+        initialTop = grp.offsetTop;
+        grp.style.zIndex = 1000;
+        grp.style.opacity = '0.8';
+      }
+      function moveDrag(e) {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        grp.style.left = `${initialLeft + dx}px`;
+        grp.style.top = `${initialTop + dy}px`;
+      }
+      function endDrag() {
+        if(isDragging) { isDragging = false; grp.style.zIndex = 100; grp.style.opacity = '1'; }
+      }
+    });
+  </script>
+</body>
+</html>
