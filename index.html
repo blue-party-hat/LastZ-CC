@@ -1,11 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Guild Map Helper</title>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 10px; box-sizing: border-box; }
+    h1 { margin: 0 0 10px 0; font-size: 1.2rem; }
+    
+    /* Layout: Top half for setup, Bottom half for map */
+    #setup-area { display: flex; flex: 1; border-bottom: 2px solid #ccc; overflow: hidden; height: 40%; }
+    #map-area { flex: 1; position: relative; background: #333; overflow: hidden; height: 60%; }
+    
+    /* Left column: Screenshot */
+    #source-panel { width: 50%; padding: 10px; border-right: 1px solid #ddd; overflow: auto; background: #f0f0f0; }
+    #source-panel img { max-width: 100%; cursor: crosshair; }
+    
+    /* Right column: Groups */
+    #groups-panel { width: 50%; padding: 10px; display: flex; flex-direction: column; gap: 10px; background: #fff; overflow: auto; }
+    .group-container { border: 2px dashed #999; padding: 5px; min-height: 60px; display: flex; flex-wrap: wrap; gap: 5px; border-radius: 4px; }
+    .group-header { font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+    
+    /* Draggable Avatar Card */
+    .avatar-card { width: 50px; height: 50px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); cursor: grab; background-size: cover; border-radius: 50%; }
+    
+    /* The Map Groups (freely draggable on map) */
+    .map-group { position: absolute; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.8); border: 2px solid gold; border-radius: 8px; cursor: move; display: flex; justify-content: center; align-items: center; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5); z-index: 100; touch-action: none; user-select: none; }
+    
+    /* Simple Map Background placeholder */
+    #map-bg { width: 100%; height: 100%; object-fit: cover; opacity: 0.5; pointer-events: none; }
+    
+    /* Controls */
+    .controls { margin-bottom: 10px; }
+  </style>
 </head>
 <body>
-  <h1>Guild Map Helper</h1>
-  <p>If you can see this page, GitHub Pages is working.</p>
+
+  <div class="controls">
+    <input type="file" id="imageLoader" accept="image/*" />
+    <span>1. Upload Screenshot &rarr; 2. Click faces to create cards &rarr; 3. Drag to groups</span>
+  </div>
+
+  <div id="setup-area">
+    <div id="source-panel">
+      <p>Screenshot will appear here...</p>
+      <img id="sourceImage" />
+    </div>
+    
+    <div id="groups-panel">
+      <!-- Group A -->
+      <div>
+        <div class="group-header">Group A</div>
+        <div class="group-container" id="group-a" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      </div>
+      <!-- Group B -->
+      <div>
+        <div class="group-header">Group B</div>
+        <div class="group-container" id="group-b" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      </div>
+      <!-- Group C -->
+      <div>
+        <div class="group-header">Group C</div>
+        <div class="group-container" id="group-c" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      </div>
+      <!-- Group D -->
+      <div>
+        <div class="group-header">Group D</div>
+        <div class="group-container" id="group-d" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="map-area">
+    <!-- Placeholder Map Background -->
+    <img id="map-bg" src="https://via.placeholder.com/800x600?text=Map+Area" />
+    
+    <!-- Draggable Map Groups -->
+    <div id="map-group-a" class="map-group" style="top: 20px; left: 20px;">A</div>
+    <div id="map-group-b" class="map-group" style="top: 20px; left: 100px;">B</div>
+    <div id="map-group-c" class="map-group" style="top: 20px; left: 180px;">C</div>
+    <div id="map-group-d" class="map-group" style="top: 20px; left: 260px;">D</div>
+  </div>
+
+  <script>
+    const imageLoader = document.getElementById('imageLoader');
+    const sourceImage = document.getElementById('sourceImage');
+    let avatarCount = 0;
+
+    // 1. Handle Image Upload
+    imageLoader.addEventListener('change', function(e) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        sourceImage.src = event.target.result;
+      }
+      reader.readAsDataURL(e.target.files[0]);
+    });
+
+    // 2. Handle Click on Screenshot to Create Avatar
+    sourceImage.addEventListener('click', function(e) {
+      // Create a canvas to crop the image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const size = 100; // Size of the crop square
+      
+      canvas.width = size;
+      canvas.height = size;
+      
+      // Calculate crop position (center around click)
+      // Note: We need the natural size vs displayed size ratio
+      const rect = sourceImage.getBoundingClientRect();
+      const scaleX = sourceImage.naturalWidth / rect.width;
+      const scaleY = sourceImage.naturalHeight / rect.height;
+      
+      const clickX = (e.clientX - rect.left) * scaleX;
+      const clickY = (e.clientY - rect.top) * scaleY;
+      
+      // Draw cropped region
+      ctx.drawImage(sourceImage, clickX - size/2, clickY - size/2, size, size, 0, 0, size, size);
+      
+      // Create the avatar element
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar-card';
+      avatar.id = 'avatar-' + avatarCount++;
+      avatar.draggable = true;
+      avatar.style.backgroundImage = `url(${canvas.toDataURL()})`;
+      
+      // Add drag events
+      avatar.ondragstart = drag;
+      
+      // Add to a default holding area (or just append to Group A for now to keep it simple)
+      // Let's put it in the first group container by default or a "holding" area.
+      // For simplicity, we append to Group A container, user can move it.
+      document.getElementById('group-a').appendChild(avatar);
+    });
+
+    // 3. Drag and Drop Logic for Avatars
+    function allowDrop(ev) { ev.preventDefault(); }
+    function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
+    function drop(ev) {
+      ev.preventDefault();
+      var data = ev.dataTransfer.getData("text");
+      if(ev.target.classList.contains('group-container')) {
+        ev.target.appendChild(document.getElementById(data));
+      }
+    }
+
+    // 4. Map Group Dragging Logic (Mouse & Touch)
+    const mapGroups = document.querySelectorAll('.map-group');
+    
+    mapGroups.forEach(grp => {
+      let isDragging = false;
+      let startX, startY, initialLeft, initialTop;
+
+      // Mouse events
+      grp.addEventListener('mousedown', startDrag);
+      window.addEventListener('mousemove', moveDrag);
+      window.addEventListener('mouseup', endDrag);
+      
+      // Touch events (for mobile)
+      grp.addEventListener('touchstart', (e) => startDrag(e.touches[0]));
+      window.addEventListener('touchmove', (e) => {
+         if(isDragging) { e.preventDefault(); moveDrag(e.touches[0]); }
+      }, {passive: false});
+      window.addEventListener('touchend', endDrag);
+
+      function startDrag(e) {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialLeft = grp.offsetLeft;
+        initialTop = grp.offsetTop;
+        grp.style.zIndex = 1000; // Bring to front
+      }
+
+      function moveDrag(e) {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        grp.style.left = `${initialLeft + dx}px`;
+        grp.style.top = `${initialTop + dy}px`;
+      }
+
+      function endDrag() {
+        isDragging = false;
+        grp.style.zIndex = 100;
+      }
+    });
+  </script>
 </body>
 </html>
