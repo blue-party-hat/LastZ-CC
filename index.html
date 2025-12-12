@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -12,7 +12,7 @@
     .tabs { display: flex; background: #333; border-bottom: 2px solid #555; height: 60px; flex-shrink: 0; }
     .tab-btn {
       flex: 1; border: none; background: #333; color: #aaa; 
-      font-size: 1.1rem; font-weight: bold; cursor: pointer;
+      font-size: 1rem; font-weight: bold; cursor: pointer;
       padding: 10px; transition: background 0.2s, color 0.2s;
     }
     .tab-btn.active { background: #222; color: gold; border-bottom: 4px solid gold; }
@@ -35,8 +35,19 @@
       overflow-y: auto; background: #333; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; 
     }
     
-    .group-wrapper { width: 48%; display: flex; flex-direction: column; min-height: 140px; }
-    .group-header { font-weight: bold; margin-bottom: 3px; font-size: 0.9rem; color: #ccc; }
+    .group-wrapper { width: 48%; display: flex; flex-direction: column; min-height: 140px; cursor: pointer; }
+    .group-header { 
+      font-weight: bold; margin-bottom: 3px; font-size: 0.9rem; color: #888; 
+      padding: 4px; border-radius: 4px; transition: 0.2s;
+    }
+    
+    /* ACTIVE GROUP STYLING */
+    .group-wrapper.active-target .group-header {
+      background: gold; color: #000;
+    }
+    .group-wrapper.active-target .group-container {
+      border-color: gold; background: #3a3a3a;
+    }
     
     .group-container { 
       flex: 1; border: 2px dashed #666; background: #444;
@@ -67,7 +78,7 @@
     }
     .avatar-card:hover .delete-btn, .avatar-card:active .delete-btn { display: block; }
 
-    /* MAP TOKENS - Desktop Size */
+    /* MAP TOKENS */
     .map-group { 
       position: absolute; 
       width: 100px; height: 80px; 
@@ -105,25 +116,11 @@
     
     #placeholder-text { text-align: center; display: block; margin-top: 20px; }
 
-    /* == MEDIA QUERY FOR MOBILE PHONES == */
+    /* MOBILE: Shrink map tokens */
     @media (max-width: 768px) {
-      .map-group {
-        width: 84px; /* Smaller token */
-        height: 56px;
-        border-width: 2px;
-      }
-      .group-label-overlay {
-        top: -20px;
-        font-size: 12px;
-        padding: 2px 6px;
-      }
-      .avatar-card {
-        width: 45px;
-        height: 45px;
-      }
-      #groups-panel {
-        padding: 5px;
-      }
+      .map-group { width: 84px; height: 56px; border-width: 2px; }
+      .group-label-overlay { top: -20px; font-size: 12px; padding: 2px 6px; }
+      .avatar-card { width: 45px; height: 45px; }
     }
   </style>
   
@@ -134,8 +131,8 @@
 <body>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="openTab('tab-selection')">1. Groups</button>
-    <button class="tab-btn" onclick="openTab('tab-map')">2. Map</button>
+    <button class="tab-btn active" onclick="openTab('tab-selection')">１．グループ決め</button>
+    <button class="tab-btn" onclick="openTab('tab-map')">２．マップ配置</button>
   </div>
 
   <div id="tab-selection" class="tab-content active">
@@ -144,24 +141,24 @@
         <span style="display:block; margin-bottom:5px; color:#aaa;">Step 1: Upload Screenshot</span>
         <input type="file" id="imageLoader" accept="image/*" />
       </div>
-      <span id="placeholder-text" style="color:#666;">(Tap Faces to Create Cards)</span>
+      <span id="placeholder-text" style="color:#666;">(Tap Group, then Tap Faces)</span>
       <img id="sourceImage" alt="Uploaded Screenshot" />
     </div>
     
     <div id="groups-panel">
-      <div class="group-wrapper"><div class="group-header">Group A</div><div class="group-container" id="group-a" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
-      <div class="group-wrapper"><div class="group-header">Group B</div><div class="group-container" id="group-b" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
-      <div class="group-wrapper"><div class="group-header">Group C</div><div class="group-container" id="group-c" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
-      <div class="group-wrapper"><div class="group-header">Group D</div><div class="group-container" id="group-d" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
-      <div class="group-wrapper"><div class="group-header">Group Y</div><div class="group-container" id="group-y" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
-      <div class="group-wrapper"><div class="group-header">Group Z</div><div class="group-container" id="group-z" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <!-- Click wrapper to set Active Group -->
+      <div class="group-wrapper active-target" onclick="setActiveGroup('group-a', this)"><div class="group-header">Group A</div><div class="group-container" id="group-a" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper" onclick="setActiveGroup('group-b', this)"><div class="group-header">Group B</div><div class="group-container" id="group-b" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper" onclick="setActiveGroup('group-c', this)"><div class="group-header">Group C</div><div class="group-container" id="group-c" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper" onclick="setActiveGroup('group-d', this)"><div class="group-header">Group D</div><div class="group-container" id="group-d" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper" onclick="setActiveGroup('group-y', this)"><div class="group-header">Group Y</div><div class="group-container" id="group-y" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper" onclick="setActiveGroup('group-z', this)"><div class="group-header">Group Z</div><div class="group-container" id="group-z" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
     </div>
   </div>
 
   <div id="tab-map" class="tab-content">
     <img id="map-bg" src="map.png" alt="MAP LOADING... (Ensure file is named map.png)" />
     
-    <!-- Map Tokens -->
     <div id="map-group-a" class="map-group" style="top: 50px; left: 20px;"><div class="group-label-overlay">A</div></div>
     <div id="map-group-b" class="map-group" style="top: 50px; left: 140px;"><div class="group-label-overlay">B</div></div>
     <div id="map-group-c" class="map-group" style="top: 50px; left: 260px;"><div class="group-label-overlay">C</div></div>
@@ -171,6 +168,8 @@
   </div>
 
   <script>
+    let currentGroupId = 'group-a';
+
     function openTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -179,11 +178,17 @@
       document.querySelectorAll('.tab-btn')[btnIndex].classList.add('active');
     }
 
+    function setActiveGroup(id, wrapperEl) {
+      currentGroupId = id;
+      document.querySelectorAll('.group-wrapper').forEach(el => el.classList.remove('active-target'));
+      wrapperEl.classList.add('active-target');
+    }
+
     const imageLoader = document.getElementById('imageLoader');
     const sourceImage = document.getElementById('sourceImage');
     const placeholderText = document.getElementById('placeholder-text');
     let avatarCount = 0;
-    let lastCropTime = 0; // Debounce variable
+    let lastCropTime = 0;
 
     imageLoader.addEventListener('change', function(e) {
       if(!e.target.files || !e.target.files[0]) return;
@@ -196,14 +201,9 @@
       reader.readAsDataURL(e.target.files[0]);
     });
 
-    // Combined handler for Click and Touch
     function handleCrop(e) {
-      // Debounce to prevent ghost clicks from touch
       const now = Date.now();
-      if (now - lastCropTime < 500) {
-        e.preventDefault();
-        return;
-      }
+      if (now - lastCropTime < 500) { e.preventDefault(); return; }
       lastCropTime = now;
       
       if (!sourceImage.src || sourceImage.style.display === 'none') return;
@@ -219,10 +219,8 @@
       
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      
       const domX = clientX - rect.left;
       const domY = clientY - rect.top;
-
       const clickX = domX * scaleX;
       const clickY = domY * scaleY;
       
@@ -249,12 +247,14 @@
       
       delBtn.addEventListener('click', deleteAction);
       delBtn.addEventListener('touchend', deleteAction);
-      
       avatar.appendChild(delBtn);
 
       avatar.ondragstart = drag;
-      document.getElementById('group-a').appendChild(avatar);
-      updateMapToken('group-a');
+      
+      // ADD TO SELECTED GROUP
+      const targetGroup = document.getElementById(currentGroupId) || document.getElementById('group-a');
+      targetGroup.appendChild(avatar);
+      updateMapToken(currentGroupId);
     };
 
     sourceImage.addEventListener('click', handleCrop);
@@ -273,6 +273,10 @@
       if(targetContainer) {
         targetContainer.classList.remove('drag-over');
         targetContainer.appendChild(draggedElement);
+        // Force update of the group we dropped INTO
+        updateMapToken(targetContainer.id);
+        
+        // Also update ALL tokens just to be safe (in case it moved FROM another group)
         updateAllMapTokens();
       }
     }
@@ -308,6 +312,7 @@
       });
     }
 
+    /* MAP DRAG */
     const mapGroups = document.querySelectorAll('.map-group');
     mapGroups.forEach(grp => {
       let isDragging = false;
@@ -316,7 +321,6 @@
       grp.addEventListener('mousedown', startDrag);
       window.addEventListener('mousemove', moveDrag);
       window.addEventListener('mouseup', endDrag);
-      
       grp.addEventListener('touchstart', (e) => startDrag(e.touches[0]));
       window.addEventListener('touchmove', (e) => { if(isDragging) { e.preventDefault(); moveDrag(e.touches[0]); } }, {passive: false});
       window.addEventListener('touchend', endDrag);
