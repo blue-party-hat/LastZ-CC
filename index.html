@@ -2,21 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- CRITICAL FOR MOBILE: Prevents zooming, ensures 1:1 scale -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Guild Map Helper</title>
   <style>
     /* DARK THEME RESET */
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; background: #222; color: #eee; }
     
-    /* TAB HEADER - Mobile Friendly */
+    /* TABS */
     .tabs { display: flex; background: #333; border-bottom: 2px solid #555; height: 60px; flex-shrink: 0; }
     .tab-btn {
       flex: 1; border: none; background: #333; color: #aaa; 
       font-size: 1.1rem; font-weight: bold; cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-      /* Better touch target */
-      padding: 10px; 
+      padding: 10px; transition: background 0.2s, color 0.2s;
     }
     .tab-btn.active { background: #222; color: gold; border-bottom: 4px solid gold; }
 
@@ -24,28 +21,21 @@
     .tab-content { display: none; height: calc(100% - 60px); width: 100%; overflow: hidden; flex-direction: column; }
     .tab-content.active { display: flex; }
 
-    /* TAB 1: SELECTION (Vertical Layout for Mobile) */
-    #tab-selection { flex-direction: column; overflow: hidden; }
+    /* TAB 1: SELECTION */
+    #tab-selection { flex-direction: column; }
     
     #source-panel { 
-      /* Top 40% for screenshot */
       width: 100%; height: 40%; padding: 10px; border-bottom: 2px solid #444; 
       overflow: auto; background: #2a2a2a; display: flex; flex-direction: column; align-items: center; 
     }
-    #source-panel img { 
-      max-width: 100%; display: none; cursor: crosshair; margin-top: 5px; border: 2px solid #555;
-    }
+    #source-panel img { max-width: 100%; display: none; cursor: crosshair; margin-top: 5px; border: 2px solid #555; }
     
     #groups-panel { 
-      /* Bottom 60% for groups */
       width: 100%; height: 60%; padding: 10px; 
       overflow-y: auto; background: #333; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; 
     }
     
-    .group-wrapper { 
-      /* 2 Columns on mobile */
-      width: 48%; display: flex; flex-direction: column; min-height: 140px; 
-    }
+    .group-wrapper { width: 48%; display: flex; flex-direction: column; min-height: 140px; }
     .group-header { font-weight: bold; margin-bottom: 3px; font-size: 0.9rem; color: #ccc; }
     
     .group-container { 
@@ -60,40 +50,36 @@
 
     /* CARDS */
     .avatar-card { 
-      width: 45px; height: 45px; /* Slightly smaller to fit mobile */
+      width: 50px; height: 50px; 
       aspect-ratio: 1/1; 
       border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.5); 
       cursor: grab; background-position: center; background-size: cover; background-repeat: no-repeat; 
       background-color: #000; border-radius: 6px; position: relative; flex-shrink: 0; 
-      touch-action: none; /* Crucial for touch dragging */
+      touch-action: none; 
     }
     .avatar-card:active { border-color: gold; }
 
-    /* DELETE BUTTON (Bigger for Touch) */
     .delete-btn {
-      position: absolute; top: -8px; right: -8px; width: 20px; height: 20px;
+      position: absolute; top: -8px; right: -8px; width: 22px; height: 22px;
       background: red; color: white; border-radius: 50%; text-align: center;
-      line-height: 18px; font-size: 14px; font-weight: bold; cursor: pointer;
+      line-height: 20px; font-size: 14px; font-weight: bold; cursor: pointer;
       border: 2px solid white; display: none; z-index: 10;
     }
-    /* Show delete button on card tap/hover */
     .avatar-card:hover .delete-btn, .avatar-card:active .delete-btn { display: block; }
 
-    /* MAP TOKENS */
+    /* MAP TOKENS - Desktop Size */
     .map-group { 
       position: absolute; 
       width: 100px; height: 80px; 
       background: rgba(255, 255, 255, 0.4); 
       border: 3px solid gold; border-radius: 8px; 
-      /* 3x2 Grid */
       display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; 
       gap: 1px; padding: 2px; 
       box-shadow: 0 4px 8px rgba(0,0,0,0.5); 
-      z-index: 100; user-select: none; overflow: visible; 
-      touch-action: none;
+      z-index: 100; user-select: none; overflow: visible; touch-action: none;
     }
 
-    .mini-avatar { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; border-radius: 2px; }
+    .mini-avatar { width: 100%; height: 100%; background-size: cover; background-repeat: no-repeat; background-position: center; border-radius: 2px; }
     
     .group-label-overlay {
       position: absolute; top: -26px; left: -10px; 
@@ -117,17 +103,33 @@
     .upload-btn-wrapper { margin-bottom: 10px; width: 100%; text-align: center; }
     input[type=file] { color: #eee; font-size: 0.9rem; }
     
-    /* Help text visibility */
     #placeholder-text { text-align: center; display: block; margin-top: 20px; }
 
+    /* == MEDIA QUERY FOR MOBILE PHONES == */
+    @media (max-width: 768px) {
+      .map-group {
+        width: 84px; /* Smaller token */
+        height: 56px;
+        border-width: 2px;
+      }
+      .group-label-overlay {
+        top: -20px;
+        font-size: 12px;
+        padding: 2px 6px;
+      }
+      .avatar-card {
+        width: 45px;
+        height: 45px;
+      }
+      #groups-panel {
+        padding: 5px;
+      }
+    }
   </style>
   
-  <!-- POLYFILL FOR MOBILE DRAG & DROP -->
+  <!-- MOBILE DRAG & DROP POLYFILL -->
   <script>
-  /* DragDropTouch Polyfill (Simplified) - Enables HTML5 DnD on Touch Devices */
-  var DragDropTouch;
-  (function(DragDropTouch_1){"use strict";var DataTransfer=function(){function DataTransfer(){this._dropEffect="move";this._effectAllowed="all";this._data={}}Object.defineProperty(DataTransfer.prototype,"dropEffect",{get:function(){return this._dropEffect},set:function(value){this._dropEffect=value},enumerable:!0,configurable:!0});Object.defineProperty(DataTransfer.prototype,"effectAllowed",{get:function(){return this._effectAllowed},set:function(value){this._effectAllowed=value},enumerable:!0,configurable:!0});Object.defineProperty(DataTransfer.prototype,"types",{get:function(){return Object.keys(this._data)},enumerable:!0,configurable:!0});DataTransfer.prototype.clearData=function(type){type!=null?delete this._data[type.toLowerCase()]:this._data={}};DataTransfer.prototype.getData=function(type){return this._data[type.toLowerCase()]||""};DataTransfer.prototype.setData=function(type,value){this._data[type.toLowerCase()]=value};DataTransfer.prototype.setDragImage=function(img,offsetX,offsetY){var ddt=DragDropTouch._instance;ddt._imgCustom=img;ddt._imgOffset={x:offsetX,y:offsetY}};return DataTransfer}();DragDropTouch_1.DataTransfer=DataTransfer;var DragDropTouch=function(){function DragDropTouch(){this._lastClick=0;if(DragDropTouch._instance){throw"DragDropTouch instance already created."}var _this=this;if("ontouchstart"in document){var d=document,ts=this._touchstart.bind(this),tm=this._touchmove.bind(this),te=this._touchend.bind(this);d.addEventListener("touchstart",ts);d.addEventListener("touchmove",tm);d.addEventListener("touchend",te);d.addEventListener("touchcancel",te)}}Object.defineProperty(DragDropTouch,"getInstance",{get:function(){return DragDropTouch._instance},enumerable:!0,configurable:!0});DragDropTouch.prototype._touchstart=function(e){var _this=this;if(e.touches.length==1){var target=e.target;while(target){if(target.draggable){this._dragSource=target;this._ptDown=this._getPoint(e);this._lastTouch=e;e.preventDefault();setTimeout(function(){if(_this._dragSource==target&&_this._img==null){if(_this._dispatchEvent(e,"contextmenu",target)){_this._reset()}}},500);return}target=target.parentElement}}};DragDropTouch.prototype._touchmove=function(e){if(this._dragSource&&!this._img&&!this._ptDown){this._ptDown=this._getPoint(e)}if(this._dragSource){if(!this._img){var delta=e.touches[0].clientX-this._ptDown.x;if(Math.abs(delta)>5){this._dispatchEvent(e,"dragstart",this._dragSource);this._createImage(e);this._dispatchEvent(e,"dragenter",e.target)}}if(this._img){this._lastTouch=e;e.preventDefault();if(e.target!=this._lastTarget){this._dispatchEvent(this._lastTouch,"dragleave",this._lastTarget);this._dispatchEvent(e,"dragenter",e.target);this._lastTarget=e.target}this._moveImage(e);this._dispatchEvent(e,"dragover",e.target)}}};DragDropTouch.prototype._touchend=function(e){if(this._dragSource){if(this._img){this._dispatchEvent(this._lastTouch,"drop",e.target);this._dispatchEvent(this._lastTouch,"dragend",this._dragSource)}else{if(Math.abs(e.changedTouches[0].clientX-this._ptDown.x)<5&&e.timeStamp-this._lastClick>500){this._lastClick=e.timeStamp;this._dragSource.click()}}this._reset()}};DragDropTouch.prototype._reset=function(){if(this._img){this._img.parentElement.removeChild(this._img);this._img=null}this._dragSource=null;this._imgCustom=null;this._ptDown=null;this._lastTouch=null;this._lastTarget=null};DragDropTouch.prototype._getPoint=function(e){if(e&&e.touches&&e.touches.length){return{x:e.touches[0].clientX,y:e.touches[0].clientY}}return{x:0,y:0}};DragDropTouch.prototype._createImage=function(e){if(this._img){this._img.parentElement.removeChild(this._img)}if(!this._imgCustom){this._img=this._dragSource.cloneNode(!0);this._copyStyle(this._dragSource,this._img);this._img.style.top=this._img.style.left="-9999px";if(!this._imgCustom){var rc=this._dragSource.getBoundingClientRect();this._ptDown.x-=rc.left;this._ptDown.y-=rc.top}}else{this._img=this._imgCustom.cloneNode(!0);this._copyStyle(this._imgCustom,this._img)}this._img.style.position="absolute";this._img.style.zIndex="999999";this._img.style.pointerEvents="none";document.body.appendChild(this._img);this._moveImage(e)};DragDropTouch.prototype._moveImage=function(e){if(this._img){requestAnimationFrame(function(){var pt=this._getPoint(e),s=this._img.style;s.position="absolute";s.pointerEvents="none";s.zIndex="999999";s.left=Math.round(pt.x-this._ptDown.x)+"px";s.top=Math.round(pt.y-this._ptDown.y)+"px"}.bind(this))}};DragDropTouch.prototype._copyStyle=function(src,dst){if(dst.removeAttribute){["id","class","style","draggable"].forEach(function(att){dst.removeAttribute(att)})}if(src instanceof HTMLCanvasElement){var cSrc=src,cDst=dst;cDst.width=cSrc.width;cDst.height=cSrc.height;cDst.getContext("2d").drawImage(cSrc,0,0)}var cs=getComputedStyle(src);for(var i=0;i<cs.length;i++){var key=cs[i];dst.style[key]=cs[key]}dst.style.pointerEvents="none"};DragDropTouch.prototype._dispatchEvent=function(e,type,target){if(e&&target){var evt=document.createEvent("Event"),t=e.touches?e.touches[0]:e;evt.initEvent(type,!0,!0);evt.button=0;evt.which=evt.buttons=1;this._copyProps(evt,e,["altKey","ctrlKey","metaKey","shiftKey"]);this._copyProps(evt,t,["pageX","pageY","clientX","clientY","screenX","screenY"]);evt.dataTransfer=new DataTransfer;target.dispatchEvent(evt);return evt.defaultPrevented}return !1};DragDropTouch.prototype._copyProps=function(dst,src,props){for(var i=0;i<props.length;i++){var p=props[i];dst[p]=src[p]}};DragDropTouch._instance=new DragDropTouch;return DragDropTouch}();DragDropTouch_1.DragDropTouch=DragDropTouch})(DragDropTouch||(DragDropTouch={}));
-  </script>
+  !function(e){var t,o=e.document,n="move",r="all",a={};function i(e){return e.touches?e.touches[0]:e}function d(e,t,o){if(e&&t&&o){var n=new Event(t,{bubbles:!0,cancelable:!0});n.button=0,n.buttons=1,n.altKey=e.altKey,n.ctrlKey=e.ctrlKey,n.metaKey=e.metaKey,n.shiftKey=e.shiftKey;var r=i(e);return n.clientX=r.clientX,n.clientY=r.clientY,n.screenX=r.screenX,n.screenY=r.screenY,n.dataTransfer=function(){return this._dataTransfer||(this._dataTransfer=new function(){this.dropEffect=n,this.effectAllowed=r,this._data={}}),this._dataTransfer}.call(o),o.dispatchEvent(n),n.defaultPrevented}return!1}var c=function(){function e(){var e=this;this._lastClick=0,this._dragSource=null,this._lastTouch=null,this._lastTarget=null,this._ptDown=null,this._dataTransfer=new function(){this.dropEffect=n,this.effectAllowed=r,this._data={}},this._img=null,this._imgCustom=null,this._imgOffset={x:0,y:0},"ontouchstart"in o&&(o.addEventListener("touchstart",this._touchstart.bind(this),!0),o.addEventListener("touchmove",this._touchmove.bind(this),!0),o.addEventListener("touchend",this._touchend.bind(this),!0),o.addEventListener("touchcancel",this._touchend.bind(this),!0))}return e.prototype._touchstart=function(e){var t=this;this._dragSource=null;var o=i(e).target;o&&"true"==o.getAttribute("draggable")&&(this._dragSource=o,this._ptDown=i(e),this._lastTouch=e,setTimeout(function(){t._dragSource==o&&null==t._img&&(d(e,"contextmenu",t._dragSource)&&t._reset())},500),e.preventDefault())},e.prototype._touchmove=function(e){if(this._dragSource){var t=this._lastTouch,o=i(e).target;if(o!=this._lastTarget&&(d(t,"dragleave",this._lastTarget),d(e,"dragenter",o),this._lastTarget=o),!this._img&&Math.abs(i(e).clientX-this._ptDown.clientX)>5&&(d(e,"dragstart",this._dragSource),this._createImage(e)),this._img){this._lastTouch=e,e.preventDefault(),this._moveImage(e),d(e,"dragover",o)}}},e.prototype._touchend=function(e){this._dragSource&&(this._img&&d(this._lastTouch,"drop",this._lastTarget),this._reset())},e.prototype._reset=function(){this._dragSource=null,this._lastTouch=null,this._lastTarget=null,this._ptDown=null,this._img&&this._img.parentElement&&this._img.parentElement.removeChild(this._img),this._img=null,this._imgCustom=null},e.prototype._createImage=function(e){this._img&&this._reset();var t=this._dragSource.cloneNode(!0);if(this._copyStyle(this._dragSource,t),"true"==t.getAttribute("draggable")&&t.removeAttribute("draggable"),t.style.position="absolute",t.style.zIndex=999999,t.style.pointerEvents="none",t.style.opacity=".5",o.body.appendChild(t),this._img=t,this._imgCustom){var n=this._dragSource.getBoundingClientRect();this._ptDown.x=n.left+this._imgOffset.x,this._ptDown.y=n.top+this._imgOffset.y}else{var r=this._dragSource.getBoundingClientRect();this._ptDown.x-=r.left,this._ptDown.y-=r.top}this._moveImage(e)},e.prototype._moveImage=function(e){var t=this,o=i(e);requestAnimationFrame(function(){t._img.style.transform="translate("+(o.clientX-t._ptDown.x)+"px, "+(o.clientY-t._ptDown.y)+"px)"})},e.prototype._copyStyle=function(e,t){["id","class","style","draggable"].forEach(function(e){t.removeAttribute(e)});var n=getComputedStyle(e);for(var r=0;r<n.length;r++){var a=n[r];t.style[a]=n[a]}},e}();t=new c,e.DragDropTouch=t}(DragDropTouch||(DragDropTouch={}))</script>
 </head>
 <body>
 
@@ -181,6 +183,7 @@
     const sourceImage = document.getElementById('sourceImage');
     const placeholderText = document.getElementById('placeholder-text');
     let avatarCount = 0;
+    let lastCropTime = 0; // Debounce variable
 
     imageLoader.addEventListener('change', function(e) {
       if(!e.target.files || !e.target.files[0]) return;
@@ -193,7 +196,16 @@
       reader.readAsDataURL(e.target.files[0]);
     });
 
-    sourceImage.addEventListener('click', function(e) {
+    // Combined handler for Click and Touch
+    function handleCrop(e) {
+      // Debounce to prevent ghost clicks from touch
+      const now = Date.now();
+      if (now - lastCropTime < 500) {
+        e.preventDefault();
+        return;
+      }
+      lastCropTime = now;
+      
       if (!sourceImage.src || sourceImage.style.display === 'none') return;
       
       const canvas = document.createElement('canvas');
@@ -205,9 +217,9 @@
       const scaleX = sourceImage.naturalWidth / rect.width;
       const scaleY = sourceImage.naturalHeight / rect.height;
       
-      // Calculate touch/click position relative to visual image
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      
       const domX = clientX - rect.left;
       const domY = clientY - rect.top;
 
@@ -228,10 +240,8 @@
       delBtn.className = 'delete-btn';
       delBtn.innerText = 'X';
       
-      // Handle Touch delete better
-      const deleteAction = function(evt) { 
-        evt.stopPropagation(); 
-        evt.preventDefault();
+      const deleteAction = (evt) => { 
+        evt.stopPropagation(); evt.preventDefault();
         const parentGroup = avatar.closest('.group-container');
         avatar.remove(); 
         if(parentGroup) updateMapToken(parentGroup.id);
@@ -245,16 +255,16 @@
       avatar.ondragstart = drag;
       document.getElementById('group-a').appendChild(avatar);
       updateMapToken('group-a');
-    });
+    };
+
+    sourceImage.addEventListener('click', handleCrop);
 
     function allowDrop(ev) { ev.preventDefault(); }
     function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
     function drop(ev) {
       ev.preventDefault();
       var data = ev.dataTransfer.getData("text");
-      // Safety check for empty data
       if (!data) return; 
-      
       const draggedElement = document.getElementById(data);
       if (!draggedElement) return;
 
@@ -267,7 +277,6 @@
       }
     }
     
-    // Add visual feedback for drag over
     document.querySelectorAll('.group-container').forEach(gc => {
       gc.addEventListener('dragover', () => gc.classList.add('drag-over'));
       gc.addEventListener('dragleave', () => gc.classList.remove('drag-over'));
@@ -286,7 +295,7 @@
       
       const label = mapToken.querySelector('.group-label-overlay');
       mapToken.innerHTML = ''; 
-      mapToken.appendChild(label);
+      if(label) mapToken.appendChild(label);
 
       const avatars = container.querySelectorAll('.avatar-card');
       avatars.forEach((av, index) => {
@@ -299,7 +308,6 @@
       });
     }
 
-    /* DRAG LOGIC FOR MAP TOKENS */
     const mapGroups = document.querySelectorAll('.map-group');
     mapGroups.forEach(grp => {
       let isDragging = false;
@@ -314,9 +322,7 @@
       window.addEventListener('touchend', endDrag);
 
       function startDrag(e) {
-        // Ignore if touching the letter label itself to avoid conflicts
         if (e.target.classList.contains('group-label-overlay')) return;
-        
         isDragging = true;
         startX = e.clientX;
         startY = e.clientY;
