@@ -30,7 +30,7 @@
     
     #map-bg { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; pointer-events: none; }
 
-    /* CARDS */
+    /* CARDS (Top Panel) */
     .avatar-card { 
       width: 50px; height: 50px; aspect-ratio: 1/1; 
       border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.5); 
@@ -47,46 +47,51 @@
     }
     .avatar-card:hover .delete-btn { display: block; }
 
-    /* MAP TOKENS - UPDATED SIZE & GRID */
+    /* MAP TOKENS */
     .map-group { 
       position: absolute; 
-      /* INCREASED SIZE to 100px */
-      width: 100px; height: 100px; 
-      background: rgba(255, 255, 255, 0.9); 
+      width: 100px; height: 80px; /* Adjusted height for 2 rows */
+      
+      /* SEMI-TRANSPARENT BACKGROUND */
+      background: rgba(255, 255, 255, 0.4); 
+      
       border: 3px solid gold; border-radius: 8px; 
       cursor: move; 
       
-      /* 3x3 Grid for up to 9 players */
+      /* 3x2 Grid for 6 players (bigger icons) */
       display: grid; 
       grid-template-columns: 1fr 1fr 1fr; 
-      grid-template-rows: 1fr 1fr 1fr; 
+      grid-template-rows: 1fr 1fr; 
       gap: 1px; padding: 2px; 
       
-      box-shadow: 0 4px 8px rgba(0,0,0,0.7); 
-      z-index: 100; user-select: none; overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5); 
+      z-index: 100; user-select: none; 
+      
+      /* IMPORTANT: Allow label to float outside without being cut off */
+      overflow: visible; 
     }
 
-    .mini-avatar { width: 100%; height: 100%; background-size: cover; background-position: center; border-radius: 2px; }
+    .mini-avatar { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; border-radius: 2px; }
     
-    /* MOVED LABEL OUTSIDE */
+    /* FLOATING LABEL (Outside Box) */
     .group-label-overlay {
       position: absolute; 
-      /* Moves it fully above the box */
-      top: -25px; left: 0; 
+      top: -24px; left: -10px; 
       background: white; border: 2px solid inherit;
       color: #333; font-weight: bold; font-size: 14px;
       padding: 2px 8px; border-radius: 12px;
       display: flex; justify-content: center; align-items: center;
-      z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      z-index: 200; box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      white-space: nowrap;
     }
 
-    /* Group Colors */
-    #map-group-a { border-color: #e74c3c; background: #e74c3c; }
-    #map-group-b { border-color: #3498db; background: #3498db; }
-    #map-group-c { border-color: #2ecc71; background: #2ecc71; }
-    #map-group-d { border-color: #f1c40f; background: #f1c40f; }
-    #map-group-y { border-color: #1abc9c; background: #1abc9c; }
-    #map-group-z { border-color: #d500f9; background: #d500f9; }
+    /* Group Colors (Border & Label only, bg is handled by opacity) */
+    #map-group-a { border-color: #e74c3c; background-color: rgba(231, 76, 60, 0.3); }
+    #map-group-b { border-color: #3498db; background-color: rgba(52, 152, 219, 0.3); }
+    #map-group-c { border-color: #2ecc71; background-color: rgba(46, 204, 113, 0.3); }
+    #map-group-d { border-color: #f1c40f; background-color: rgba(241, 196, 15, 0.3); }
+    #map-group-y { border-color: #1abc9c; background-color: rgba(26, 188, 156, 0.3); }
+    #map-group-z { border-color: #d500f9; background-color: rgba(213, 0, 249, 0.3); }
     
     .group-label-overlay { background: #fff; border-color: inherit; }
 
@@ -121,7 +126,7 @@
   <div id="map-area">
     <img id="map-bg" src="map.png" alt="MAP LOADING... (Ensure file is named map.png)" />
     
-    <!-- Map Tokens (Bigger, 3x3 Grid) -->
+    <!-- Map Tokens -->
     <div id="map-group-a" class="map-group" style="top: 20px; left: 20px;"><div class="group-label-overlay">A</div></div>
     <div id="map-group-b" class="map-group" style="top: 20px; left: 140px;"><div class="group-label-overlay">B</div></div>
     <div id="map-group-c" class="map-group" style="top: 20px; left: 260px;"><div class="group-label-overlay">C</div></div>
@@ -152,6 +157,7 @@
 
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
+      // Max quality crop
       const size = 180; 
       canvas.width = size; canvas.height = size;
       
@@ -216,9 +222,9 @@
       mapToken.appendChild(label);
 
       const avatars = container.querySelectorAll('.avatar-card');
-      // Limit to 9 for 3x3 grid
+      // Limit to 6 for 3x2 grid
       avatars.forEach((av, index) => {
-        if(index < 9) {
+        if(index < 6) {
            const mini = document.createElement('div');
            mini.className = 'mini-avatar';
            mini.style.backgroundImage = `url(${av.dataset.img})`;
@@ -246,7 +252,7 @@
         initialLeft = grp.offsetLeft;
         initialTop = grp.offsetTop;
         grp.style.zIndex = 1000;
-        grp.style.opacity = '0.8';
+        grp.style.opacity = '1'; /* Keep opaque while dragging to see clearly */
       }
       function moveDrag(e) {
         if (!isDragging) return;
@@ -256,7 +262,7 @@
         grp.style.top = `${initialTop + dy}px`;
       }
       function endDrag() {
-        if(isDragging) { isDragging = false; grp.style.zIndex = 100; grp.style.opacity = '1'; }
+        if(isDragging) { isDragging = false; grp.style.zIndex = 100; }
       }
     });
   </script>
