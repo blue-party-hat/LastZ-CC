@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Guild Map Helper</title>
   <style>
-    /* DARK THEME RESET */
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; background: #222; color: #eee; }
+    /* DARK THEME RESET & BOX SIZING FIX */
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 0; overflow: hidden; background: #222; color: #eee; }
     
     /* TOP DATA BAR (SAVE/LOAD) */
     .data-bar { 
@@ -52,7 +53,11 @@
       padding-bottom: 80px; 
     }
     
-    .group-wrapper { width: 48%; display: flex; flex-direction: column; min-height: 140px; cursor: pointer; }
+    /* Groups Layout - Fix width for mobile */
+    .group-wrapper { 
+      width: calc(50% - 5px); /* Perfectly split 2 columns with gap */
+      display: flex; flex-direction: column; min-height: 140px; cursor: pointer; 
+    }
     .group-header { 
       font-weight: bold; margin-bottom: 3px; font-size: 0.9rem; color: #888; 
       padding: 4px; border-radius: 4px; transition: 0.2s;
@@ -64,7 +69,7 @@
       transition: border-color 0.2s, background-color 0.2s;
     }
 
-    /* DYNAMIC ACTIVE COLORS (Matching Map Tokens) */
+    /* DYNAMIC ACTIVE COLORS */
     .group-wrapper.active-target[data-id="group-a"] .group-header { background: #e74c3c; color: white; }
     .group-wrapper.active-target[data-id="group-a"] .group-container { border-color: #e74c3c; background: rgba(231, 76, 60, 0.1); }
 
@@ -143,11 +148,11 @@
     .upload-btn-wrapper { margin-bottom: 10px; width: 100%; text-align: center; }
     input[type=file] { color: #eee; font-size: 0.85rem; }
     
-    /* INSTRUCTION TEXT */
+    /* INSTRUCTION TEXT - Japanese Fixed */
     #placeholder-text { 
-      text-align: left; display: block; margin-top: 10px; 
-      color: #aaa; font-size: 0.9rem; line-height: 1.6;
-      background: #333; padding: 15px; border-radius: 8px; border: 1px solid #555;
+      text-align: left; display: block; margin-top: 10px; width: 100%;
+      color: #aaa; font-size: 0.85rem; line-height: 1.6;
+      background: #333; padding: 12px; border-radius: 8px; border: 1px solid #555;
     }
 
     /* MOBILE QUERY */
@@ -155,6 +160,7 @@
       .map-group { width: 84px; height: 56px; border-width: 2px; }
       .group-label-overlay { top: -20px; font-size: 12px; padding: 2px 6px; }
       .avatar-card { width: 45px; height: 45px; }
+      #placeholder-text { font-size: 0.8rem; }
     }
   </style>
   
@@ -184,7 +190,7 @@
       </div>
       <div id="placeholder-text">
         Step1: 峡谷グループのスクショをアップロードします<br>
-        Step2: 下のグループをタップして選択 (赤くなります)<br>
+        Step2: 下のグループをタップして選択します<br>
         Step3: アバターの中心をタップすると選択したグループに入ります
       </div>
       <img id="sourceImage" alt="Uploaded Screenshot" />
