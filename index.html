@@ -200,4 +200,107 @@
       const scaleX = sourceImage.naturalWidth / rect.width;
       const scaleY = sourceImage.naturalHeight / rect.height;
       const clickX = (e.clientX - rect.left) * scaleX;
-      const clickY =
+      const clickY = (e.clientY - rect.top) * scaleY;
+      
+      ctx.drawImage(sourceImage, clickX - size/2, clickY - size/2, size, size, 0, 0, size, size);
+      const imgData = canvas.toDataURL();
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar-card';
+      avatar.id = 'avatar-' + avatarCount++;
+      avatar.draggable = true;
+      avatar.style.backgroundImage = `url(${imgData})`;
+      avatar.dataset.img = imgData;
+      
+      const delBtn = document.createElement('div');
+      delBtn.className = 'delete-btn';
+      delBtn.innerText = 'X';
+      delBtn.onclick = function(evt) { 
+        evt.stopPropagation(); 
+        const parentGroup = avatar.closest('.group-container');
+        avatar.remove(); 
+        if(parentGroup) updateMapToken(parentGroup.id);
+      };
+      avatar.appendChild(delBtn);
+
+      avatar.ondragstart = drag;
+      document.getElementById('group-a').appendChild(avatar);
+      updateMapToken('group-a');
+    });
+
+    function allowDrop(ev) { ev.preventDefault(); }
+    function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
+    function drop(ev) {
+      ev.preventDefault();
+      var data = ev.dataTransfer.getData("text");
+      const draggedElement = document.getElementById(data);
+      const targetContainer = ev.target.closest('.group-container');
+      
+      if(targetContainer) {
+        targetContainer.appendChild(draggedElement);
+        updateAllMapTokens();
+      }
+    }
+
+    function updateAllMapTokens() {
+      ['a','b','c','d','y','z'].forEach(id => updateMapToken('group-' + id));
+    }
+
+    function updateMapToken(groupId) {
+      const groupLetter = groupId.split('-')[1]; 
+      const mapToken = document.getElementById('map-group-' + groupLetter);
+      if(!mapToken) return;
+      const container = document.getElementById(groupId);
+      
+      const label = mapToken.querySelector('.group-label-overlay');
+      mapToken.innerHTML = ''; 
+      mapToken.appendChild(label);
+
+      const avatars = container.querySelectorAll('.avatar-card');
+      // Limit to 6 for 3x2 grid
+      avatars.forEach((av, index) => {
+        if(index < 6) {
+           const mini = document.createElement('div');
+           mini.className = 'mini-avatar';
+           mini.style.backgroundImage = `url(${av.dataset.img})`;
+           mapToken.appendChild(mini);
+        }
+      });
+    }
+
+    // MAP DRAG LOGIC (Works across tabs because DOM exists)
+    const mapGroups = document.querySelectorAll('.map-group');
+    mapGroups.forEach(grp => {
+      let isDragging = false;
+      let startX, startY, initialLeft, initialTop;
+
+      grp.addEventListener('mousedown', startDrag);
+      window.addEventListener('mousemove', moveDrag);
+      window.addEventListener('mouseup', endDrag);
+      grp.addEventListener('touchstart', (e) => startDrag(e.touches[0]));
+      window.addEventListener('touchmove', (e) => { if(isDragging) { e.preventDefault(); moveDrag(e.touches[0]); } }, {passive: false});
+      window.addEventListener('touchend', endDrag);
+
+      function startDrag(e) {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialLeft = grp.offsetLeft;
+        initialTop = grp.offsetTop;
+        grp.style.zIndex = 1000;
+        grp.style.opacity = '1'; 
+      }
+      function moveDrag(e) {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        grp.style.left = `${initialLeft + dx}px`;
+        grp.style.top = `${initialTop + dy}px`;
+      }
+      function endDrag() {
+        if(isDragging) { isDragging = false; grp.style.zIndex = 100; }
+      }
+    });
+  </script>
+</body>
+</html>
