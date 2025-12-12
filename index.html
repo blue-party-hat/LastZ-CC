@@ -5,15 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Guild Map Helper</title>
   <style>
-    /* BASIC RESET & LAYOUT */
+    /* DARK MODE STYLING */
     body { font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 10px; box-sizing: border-box; overflow: hidden; background: #222; color: #eee; }
     
-    /* TOP AREA: SETUP (40% height) */
+    /* TOP AREA: SETUP */
     #setup-area { display: flex; flex: 1; border-bottom: 4px solid #555; overflow: hidden; height: 40%; margin-bottom: 10px; background: #333; }
     
+    /* Left: Screenshot */
     #source-panel { width: 35%; padding: 10px; border-right: 2px solid #555; overflow: auto; background: #2a2a2a; display: flex; align-items: flex-start; justify-content: center; }
     #source-panel img { max-width: 100%; border: 2px solid #444; cursor: crosshair; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
     
+    /* Right: Groups */
     #groups-panel { width: 65%; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; background: #333; overflow-y: auto; align-content: flex-start; }
     
     .group-wrapper { width: 32%; display: flex; flex-direction: column; box-sizing: border-box; }
@@ -33,17 +35,18 @@
     }
     .group-container:hover { border-color: #888; background: #555; }
 
-    /* BOTTOM AREA: MAP (60% height) */
+    /* BOTTOM AREA: MAP */
     #map-area { flex: 1.5; position: relative; background: #111; overflow: hidden; border: 2px solid #000; border-radius: 4px; }
     
-    /* The Map Image Background */
+    /* MAP BACKGROUND IMAGE */
     #map-bg { 
       width: 100%; 
       height: 100%; 
-      object-fit: contain; /* Ensures the whole map is visible */
+      object-fit: contain; 
       object-position: center;
       pointer-events: none; 
-      background: #000;
+      /* Fallback background color */
+      background: #000; 
     }
     
     /* AVATAR CARD */
@@ -64,6 +67,7 @@
     }
     .avatar-card:active { cursor: grabbing; border-color: gold; }
 
+    /* Delete Button */
     .delete-btn {
       position: absolute; top: -6px; right: -6px; width: 16px; height: 16px;
       background: red; color: white; border-radius: 50%; text-align: center;
@@ -72,7 +76,7 @@
     }
     .avatar-card:hover .delete-btn { display: block; }
 
-    /* MAP GROUP MARKERS (A, B, C...) */
+    /* MAP TOKENS */
     .map-group { 
       position: absolute; 
       width: 45px; height: 45px; 
@@ -84,7 +88,7 @@
       touch-action: none; user-select: none; 
     }
     
-    /* Unique Colors */
+    /* Group Colors */
     #map-group-a { border-color: #e74c3c; color: #c0392b; }
     #map-group-b { border-color: #3498db; color: #2980b9; }
     #map-group-c { border-color: #2ecc71; color: #27ae60; }
@@ -93,7 +97,6 @@
     #map-group-y { border-color: #1abc9c; color: #16a085; }
     #map-group-z { border-color: #95a5a6; color: #7f8c8d; }
 
-    /* CONTROLS */
     .controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; background: #444; padding: 5px 10px; border-radius: 4px; color: #eee; }
     .step-text { font-size: 0.9rem; color: #ccc; }
   </style>
@@ -113,7 +116,100 @@
     </div>
     
     <div id="groups-panel">
-      <!-- 7 Groups: A, B, C, D, N, Y, Z -->
+      <!-- 7 Groups -->
       <div class="group-wrapper"><div class="group-header">Group A</div><div class="group-container" id="group-a" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
       <div class="group-wrapper"><div class="group-header">Group B</div><div class="group-container" id="group-b" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
-      <div class="group-wrapper"><div class="group-header">Group C</div><div class="group-container" id="group-c" ondrop="drop(event)" ondragover="allow
+      <div class="group-wrapper"><div class="group-header">Group C</div><div class="group-container" id="group-c" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper"><div class="group-header">Group D</div><div class="group-container" id="group-d" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper"><div class="group-header">Group N</div><div class="group-container" id="group-n" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper"><div class="group-header">Group Y</div><div class="group-container" id="group-y" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+      <div class="group-wrapper"><div class="group-header">Group Z</div><div class="group-container" id="group-z" ondrop="drop(event)" ondragover="allowDrop(event)"></div></div>
+    </div>
+  </div>
+
+  <div id="map-area">
+    <!-- Links to map.jpg in your repo. If missing, shows black background. -->
+    <img id="map-bg" src="map.jpg" onerror="this.style.display='none'" />
+    
+    <!-- Draggable Map Tokens -->
+    <div id="map-group-a" class="map-group" style="top: 20px; left: 20px;">A</div>
+    <div id="map-group-b" class="map-group" style="top: 20px; left: 80px;">B</div>
+    <div id="map-group-c" class="map-group" style="top: 20px; left: 140px;">C</div>
+    <div id="map-group-d" class="map-group" style="top: 20px; left: 200px;">D</div>
+    <div id="map-group-n" class="map-group" style="top: 20px; left: 260px;">N</div>
+    <div id="map-group-y" class="map-group" style="top: 20px; left: 320px;">Y</div>
+    <div id="map-group-z" class="map-group" style="top: 20px; left: 380px;">Z</div>
+  </div>
+
+  <script>
+    const imageLoader = document.getElementById('imageLoader');
+    const sourceImage = document.getElementById('sourceImage');
+    const placeholderText = document.getElementById('placeholder-text');
+    let avatarCount = 0;
+
+    imageLoader.addEventListener('change', function(e) {
+      if(!e.target.files[0]) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        sourceImage.src = event.target.result;
+        sourceImage.style.display = 'block';
+        placeholderText.style.display = 'none';
+      }
+      reader.readAsDataURL(e.target.files[0]);
+    });
+
+    // CLICK -> CREATE CARD
+    sourceImage.addEventListener('click', function(e) {
+      if (!sourceImage.src) return;
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const size = 180; 
+      
+      canvas.width = size;
+      canvas.height = size;
+      
+      const rect = sourceImage.getBoundingClientRect();
+      const scaleX = sourceImage.naturalWidth / rect.width;
+      const scaleY = sourceImage.naturalHeight / rect.height;
+      const clickX = (e.clientX - rect.left) * scaleX;
+      const clickY = (e.clientY - rect.top) * scaleY;
+      
+      ctx.drawImage(sourceImage, clickX - size/2, clickY - size/2, size, size, 0, 0, size, size);
+      
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar-card';
+      avatar.id = 'avatar-' + avatarCount++;
+      avatar.draggable = true;
+      avatar.style.backgroundImage = `url(${canvas.toDataURL()})`;
+      
+      const delBtn = document.createElement('div');
+      delBtn.className = 'delete-btn';
+      delBtn.innerText = 'X';
+      delBtn.onclick = function(evt) { evt.stopPropagation(); avatar.remove(); };
+      avatar.appendChild(delBtn);
+
+      avatar.ondragstart = drag;
+      document.getElementById('group-a').appendChild(avatar);
+    });
+
+    function allowDrop(ev) { ev.preventDefault(); }
+    function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
+    function drop(ev) {
+      ev.preventDefault();
+      var data = ev.dataTransfer.getData("text");
+      const draggedElement = document.getElementById(data);
+      if(ev.target.classList.contains('group-container')) {
+        ev.target.appendChild(draggedElement);
+      } else if (ev.target.closest('.group-container')) {
+        ev.target.closest('.group-container').appendChild(draggedElement);
+      }
+    }
+
+    const mapGroups = document.querySelectorAll('.map-group');
+    mapGroups.forEach(grp => {
+      let isDragging = false;
+      let startX, startY, initialLeft, initialTop;
+
+      grp.addEventListener('mousedown', startDrag);
+      window.addEventListener('
