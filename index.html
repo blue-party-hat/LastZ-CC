@@ -132,4 +132,184 @@
     <div class="step-text">
       1. Upload &rarr; 2. Click Faces &rarr; 3. Drag to Groups &rarr; 4. Move Map Tokens
     </div>
-    <input type="file" id="imageLoader"
+    <input type="file" id="imageLoader" accept="image/*" />
+  </div>
+
+  <div id="setup-area">
+    <!-- Left: Screenshot Source -->
+    <div id="source-panel">
+      <span id="placeholder-text" style="margin-top:20px; color:#888;">Upload a screenshot to begin...</span>
+      <img id="sourceImage" />
+    </div>
+    
+    <!-- Right: The 4 Group Buckets -->
+    <div id="groups-panel">
+      <!-- Group A -->
+      <div class="group-wrapper">
+        <div class="group-header">Group A</div>
+        <div class="group-container" id="group-a" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      </div>
+      <!-- Group B -->
+      <div class="group-wrapper">
+        <div class="group-header">Group B</div>
+        <div class="group-container" id="group-b" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      </div>
+      <!-- Group C -->
+      <div class="group-wrapper">
+        <div class="group-header">Group C</div>
+        <div class="group-container" id="group-c" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      </div>
+      <!-- Group D -->
+      <div class="group-wrapper">
+        <div class="group-header">Group D</div>
+        <div class="group-container" id="group-d" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="map-area">
+    <!-- Placeholder Map Background -->
+    <img id="map-bg" src="https://via.placeholder.com/800x600/333333/ffffff?text=Map+Area+(Groups+Go+Here)" />
+    
+    <!-- Draggable Map Tokens -->
+    <div id="map-group-a" class="map-group" style="top: 20px; left: 20px;">A</div>
+    <div id="map-group-b" class="map-group" style="top: 20px; left: 90px;">B</div>
+    <div id="map-group-c" class="map-group" style="top: 20px; left: 160px;">C</div>
+    <div id="map-group-d" class="map-group" style="top: 20px; left: 230px;">D</div>
+  </div>
+
+  <script>
+    const imageLoader = document.getElementById('imageLoader');
+    const sourceImage = document.getElementById('sourceImage');
+    const placeholderText = document.getElementById('placeholder-text');
+    let avatarCount = 0;
+
+    // 1. Handle Image Upload
+    imageLoader.addEventListener('change', function(e) {
+      if(!e.target.files[0]) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        sourceImage.src = event.target.result;
+        sourceImage.style.display = 'block';
+        placeholderText.style.display = 'none';
+      }
+      reader.readAsDataURL(e.target.files[0]);
+    });
+
+    // 2. Handle Click on Screenshot to Create Square Avatar
+    sourceImage.addEventListener('click', function(e) {
+      if (!sourceImage.src) return;
+
+      // Create a canvas to crop the image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const size = 120; // Resolution of the cropped image
+      
+      canvas.width = size;
+      canvas.height = size;
+      
+      // Calculate crop position
+      const rect = sourceImage.getBoundingClientRect();
+      const scaleX = sourceImage.naturalWidth / rect.width;
+      const scaleY = sourceImage.naturalHeight / rect.height;
+      
+      const clickX = (e.clientX - rect.left) * scaleX;
+      const clickY = (e.clientY - rect.top) * scaleY;
+      
+      // Draw cropped square region centered on click
+      ctx.drawImage(sourceImage, clickX - size/2, clickY - size/2, size, size, 0, 0, size, size);
+      
+      // Create the avatar element container
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar-card';
+      avatar.id = 'avatar-' + avatarCount++;
+      avatar.draggable = true;
+      avatar.style.backgroundImage = `url(${canvas.toDataURL()})`;
+      
+      // Create Delete Button (X)
+      const delBtn = document.createElement('div');
+      delBtn.className = 'delete-btn';
+      delBtn.innerText = 'X';
+      delBtn.onclick = function(evt) {
+        evt.stopPropagation(); // Stop click from triggering anything else
+        avatar.remove(); // Remove the avatar card
+      };
+      
+      avatar.appendChild(delBtn);
+
+      // Add drag events
+      avatar.ondragstart = drag;
+      
+      // Add to Group A by default (user can move it later)
+      document.getElementById('group-a').appendChild(avatar);
+    });
+
+    // 3. Drag and Drop Logic for Avatars (Desktop)
+    function allowDrop(ev) { ev.preventDefault(); }
+    function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
+    function drop(ev) {
+      ev.preventDefault();
+      var data = ev.dataTransfer.getData("text");
+      const draggedElement = document.getElementById(data);
+      // Only allow dropping inside group containers
+      if(ev.target.classList.contains('group-container')) {
+        ev.target.appendChild(draggedElement);
+      } else if (ev.target.closest('.group-container')) {
+        // If dropped on another card inside container, append to container
+        ev.target.closest('.group-container').appendChild(draggedElement);
+      }
+    }
+
+    // 4. Map Group Dragging Logic (Supports Mouse & Touch)
+    const mapGroups = document.querySelectorAll('.map-group');
+    
+    mapGroups.forEach(grp => {
+      let isDragging = false;
+      let startX, startY, initialLeft, initialTop;
+
+      // Mouse events
+      grp.addEventListener('mousedown', startDrag);
+      window.addEventListener('mousemove', moveDrag);
+      window.addEventListener('mouseup', endDrag);
+      
+      // Touch events
+      grp.addEventListener('touchstart', (e) => startDrag(e.touches[0]));
+      window.addEventListener('touchmove', (e) => {
+         if(isDragging) { e.preventDefault(); moveDrag(e.touches[0]); }
+      }, {passive: false});
+      window.addEventListener('touchend', endDrag);
+
+      function startDrag(e) {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialLeft = grp.offsetLeft;
+        initialTop = grp.offsetTop;
+        grp.style.zIndex = 1000;
+        grp.style.opacity = '0.8';
+      }
+
+      function moveDrag(e) {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        
+        // Simple boundary check (optional, keeps it roughly in map area)
+        const newLeft = initialLeft + dx;
+        const newTop = initialTop + dy;
+        
+        grp.style.left = `${newLeft}px`;
+        grp.style.top = `${newTop}px`;
+      }
+
+      function endDrag() {
+        if(isDragging) {
+           isDragging = false;
+           grp.style.zIndex = 100;
+           grp.style.opacity = '1';
+        }
+      }
+    });
+  </script>
+</body>
+</html>
